@@ -7,9 +7,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const sql = readFileSync(join(__dirname, 'indexes.sql'), 'utf8');
 
 const statements = sql
+  .split('\n')
+  .filter(line => !line.trimStart().startsWith('--'))
+  .join('\n')
   .split(';')
   .map(s => s.trim())
-  .filter(s => s.length > 0 && !s.startsWith('--'));
+  .filter(s => s.length > 0);
 
 let conn;
 try {
