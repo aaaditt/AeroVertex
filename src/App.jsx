@@ -66,6 +66,7 @@ export default function App() {
       </Shell>
       <FlightDetail
         flightId={selectedItem?.type === 'flight' ? selectedItem.id : null}
+        simSecond={simSecond}
         onClose={() => setSelectedItem(null)}
       />
     </>

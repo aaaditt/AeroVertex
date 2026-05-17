@@ -227,17 +227,20 @@ CREATE TABLE TurnaroundCharge (
 
 -- 17. live_map_cache (hand-rolled materialized view, no FKs)
 CREATE TABLE live_map_cache (
-  flight_id         INT          NOT NULL,
-  flight_number     VARCHAR(20)  NOT NULL,
-  airline_name      VARCHAR(100) NOT NULL,
-  status            VARCHAR(20)  NOT NULL,
-  gate_x            DECIMAL(8,2) NULL,
-  gate_y            DECIMAL(8,2) NULL,
-  bay_x             DECIMAL(8,2) NULL,
-  bay_y             DECIMAL(8,2) NULL,
-  sim_arrival_sec   INT          NOT NULL,
-  sim_gate_in_sec   INT          NOT NULL,
-  sim_gate_out_sec  INT          NOT NULL,
-  sim_departure_sec INT          NOT NULL,
+  flight_id           INT          NOT NULL,
+  flight_number       VARCHAR(20)  NOT NULL,
+  airline_name        VARCHAR(100) NOT NULL,
+  status              VARCHAR(20)  NOT NULL,
+  origin_airport      CHAR(3)      NULL,
+  destination_airport CHAR(3)      NULL,
+  delay_seconds       INT          NOT NULL DEFAULT 0,
+  gate_x              DECIMAL(8,2) NULL,
+  gate_y              DECIMAL(8,2) NULL,
+  bay_x               DECIMAL(8,2) NULL,
+  bay_y               DECIMAL(8,2) NULL,
+  sim_arrival_sec     INT          NOT NULL,
+  sim_gate_in_sec     INT          NOT NULL,
+  sim_gate_out_sec    INT          NOT NULL,
+  sim_departure_sec   INT          NOT NULL,
   PRIMARY KEY (flight_id)
 ) ENGINE=InnoDB;

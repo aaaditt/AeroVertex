@@ -64,30 +64,29 @@ const AIRLINE_FLEET = [
   { types: [8, 9, 9, 9, 9], tailPfx: 'N6', tailSfx: 'UP', cargo: true  }, // UPS
 ];
 
+// Gate coordinates must match mapConfig.js exactly.
+// A-gates: finger pier tips (y=305). B-gates: terminal north apron (y=162).
 const GATE_DATA = [
-  { gate_label: 'A1', max_size_category: 1, map_x: 185, map_y: 235 },
-  { gate_label: 'A2', max_size_category: 2, map_x: 255, map_y: 235 },
-  { gate_label: 'A3', max_size_category: 2, map_x: 325, map_y: 235 },
-  { gate_label: 'A4', max_size_category: 3, map_x: 395, map_y: 235 },
-  { gate_label: 'A5', max_size_category: 3, map_x: 465, map_y: 235 },
-  { gate_label: 'A6', max_size_category: 3, map_x: 535, map_y: 235 },
-  { gate_label: 'A7', max_size_category: 4, map_x: 605, map_y: 235 },
-  { gate_label: 'B1', max_size_category: 2, map_x: 205, map_y: 170 },
-  { gate_label: 'B2', max_size_category: 3, map_x: 295, map_y: 170 },
-  { gate_label: 'B3', max_size_category: 3, map_x: 385, map_y: 170 },
-  { gate_label: 'B4', max_size_category: 4, map_x: 475, map_y: 170 },
-  { gate_label: 'B5', max_size_category: 4, map_x: 565, map_y: 170 },
-  { gate_label: 'B6', max_size_category: 5, map_x: 655, map_y: 170 },
-  { gate_label: 'B7', max_size_category: 5, map_x: 745, map_y: 170 },
+  { gate_label: 'A1', max_size_category: 2, map_x: 155, map_y: 305 },
+  { gate_label: 'A2', max_size_category: 3, map_x: 255, map_y: 305 },
+  { gate_label: 'A3', max_size_category: 3, map_x: 360, map_y: 305 },
+  { gate_label: 'A4', max_size_category: 4, map_x: 465, map_y: 305 },
+  { gate_label: 'A5', max_size_category: 4, map_x: 565, map_y: 305 },
+  { gate_label: 'B1', max_size_category: 2, map_x: 175, map_y: 162 },
+  { gate_label: 'B2', max_size_category: 3, map_x: 265, map_y: 162 },
+  { gate_label: 'B3', max_size_category: 3, map_x: 355, map_y: 162 },
+  { gate_label: 'B4', max_size_category: 4, map_x: 445, map_y: 162 },
+  { gate_label: 'B5', max_size_category: 4, map_x: 535, map_y: 162 },
+  { gate_label: 'B6', max_size_category: 5, map_x: 615, map_y: 162 },
 ];
 
 const BAY_DATA = [
-  { bay_label: 'C1', max_size_category: 4, map_x: 310, map_y: 495 },
-  { bay_label: 'C2', max_size_category: 4, map_x: 390, map_y: 495 },
-  { bay_label: 'C3', max_size_category: 4, map_x: 470, map_y: 495 },
-  { bay_label: 'C4', max_size_category: 4, map_x: 550, map_y: 495 },
-  { bay_label: 'C5', max_size_category: 5, map_x: 630, map_y: 495 },
-  { bay_label: 'C6', max_size_category: 5, map_x: 710, map_y: 495 },
+  { bay_label: 'C1', max_size_category: 4, map_x: 285, map_y: 495 },
+  { bay_label: 'C2', max_size_category: 4, map_x: 365, map_y: 495 },
+  { bay_label: 'C3', max_size_category: 4, map_x: 445, map_y: 495 },
+  { bay_label: 'C4', max_size_category: 4, map_x: 525, map_y: 495 },
+  { bay_label: 'C5', max_size_category: 5, map_x: 605, map_y: 495 },
+  { bay_label: 'C6', max_size_category: 5, map_x: 685, map_y: 495 },
 ];
 
 const EQUIPMENT_DATA = [
@@ -293,7 +292,10 @@ try {
     const rwIdx = gi % 2; // alternate runways
 
     // ── Batch A (early) ───────────────────────────────────────────────────
-    const arrA  = 30 + gi * 25;           // 30, 55, 80 … 355 s
+    // Start at 220 s (just outside LOOKAHEAD=200) so planes are never
+    // pre-fetched already-parked at sim second 0. Space 40 s apart so the
+    // runway isn't overwhelmed and queue separation stays clean.
+    const arrA  = 220 + gi * 40;           // 220, 260, 300 … 620 s
     const ginA  = arrA + TAXI;
     const goutA = ginA + 200 + (gi % 3) * 20;   // 200 – 240 s gate time
     const depA  = goutA + PUSHBK;
@@ -401,9 +403,9 @@ try {
   // Cargo bays have no buffer trigger — free scheduling.
   // ─────────────────────────────────────────────────────────────────────────
   const CARGO_BATCHES = [
-    { base: 50,   gateTime: 300 },
-    { base: 700,  gateTime: 250 },
-    { base: 1350, gateTime: 200 },
+    { base: 250,  gateTime: 300 },   // start outside LOOKAHEAD=200 window
+    { base: 800,  gateTime: 250 },
+    { base: 1380, gateTime: 200 },
   ];
 
   const cargoFlightIds = [];

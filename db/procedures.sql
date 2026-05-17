@@ -102,6 +102,7 @@ BEGIN
   DELETE FROM live_map_cache;
   INSERT INTO live_map_cache
   SELECT f.flight_id, f.flight_number, a.airline_name, f.status,
+         f.origin_airport, f.destination_airport, f.delay_seconds,
          g.map_x, g.map_y, b.map_x, b.map_y,
          f.sim_arrival_sec, f.sim_gate_in_sec,
          f.sim_gate_out_sec, f.sim_departure_sec

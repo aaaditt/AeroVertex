@@ -46,7 +46,9 @@
       "Skill(superpowers:verification-before-completion)",
       "Bash(vercel whoami *)",
       "Bash(vercel ls *)",
-      "Bash(vercel env *)"
+      "Bash(vercel env *)",
+      "Bash(vercel --prod)",
+      "Bash(curl -s \"https://airport-management-nine.vercel.app/api/map?sec=500\")"
     ]
   }
 }
