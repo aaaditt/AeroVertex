@@ -148,22 +148,22 @@ function EventRow({ event }) {
   )
 }
 
-export default function ATCConsole() {
+export default function ATCConsole({ simSecond = 0 }) {
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
-
-  function fetchData() {
-    fetch('/api/atc')
-      .then(r => r.json())
-      .then(d => { setData(d); setError(null) })
-      .catch(() => setError('Failed to load ATC data.'))
-  }
+  const bucketSec = Math.floor(simSecond / 5) * 5
 
   useEffect(() => {
+    function fetchData() {
+      fetch(`/api/atc?sec=${bucketSec}`)
+        .then(r => r.json())
+        .then(d => { setData(d); setError(null) })
+        .catch(() => setError('Failed to load ATC data.'))
+    }
     fetchData()
     const id = setInterval(fetchData, 3000)
     return () => clearInterval(id)
-  }, [])
+  }, [bucketSec])
 
   const grouped  = data?.flights ?? {}
   const events   = data?.recent_events ?? []

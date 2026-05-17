@@ -84,16 +84,17 @@ function RunwayBar({ label, utilization }) {
   )
 }
 
-export default function AirportPanel() {
+export default function AirportPanel({ simSecond = 0 }) {
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
+  const bucketSec = Math.floor(simSecond / 5) * 5
 
   useEffect(() => {
-    fetch('/api/airport')
+    fetch(`/api/airport?sec=${bucketSec}`)
       .then(r => r.json())
       .then(d => { setData(d); setError(null) })
       .catch(() => setError('Failed to load airport data.'))
-  }, [])
+  }, [bucketSec])
 
   const terminals    = data?.terminals ?? []
   const runways      = data?.runways ?? []

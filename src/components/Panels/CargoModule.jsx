@@ -104,7 +104,7 @@ const thStyle = {
   whiteSpace: 'nowrap',
 }
 
-export default function CargoModule() {
+export default function CargoModule({ simSecond = 0 }) {
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
 

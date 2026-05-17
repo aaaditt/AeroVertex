@@ -202,7 +202,7 @@ function PassengerTable({ result }) {
   )
 }
 
-export default function AnalyticsDashboard() {
+export default function AnalyticsDashboard({ simSecond = 0 }) {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)

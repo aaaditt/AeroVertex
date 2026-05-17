@@ -114,24 +114,24 @@ function Board({ rows, type }) {
   )
 }
 
-export default function BoardsPanel() {
+export default function BoardsPanel({ simSecond = 0 }) {
   const [tab, setTab] = useState('arrivals')
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
   const [lastRefresh, setLastRefresh] = useState(null)
-
-  function fetchData() {
-    fetch('/api/boards')
-      .then(r => r.json())
-      .then(d => { setData(d); setError(null); setLastRefresh(new Date()) })
-      .catch(() => setError('Failed to load boards data.'))
-  }
+  const bucketSec = Math.floor(simSecond / 5) * 5
 
   useEffect(() => {
+    function fetchData() {
+      fetch(`/api/boards?sec=${bucketSec}`)
+        .then(r => r.json())
+        .then(d => { setData(d); setError(null); setLastRefresh(new Date()) })
+        .catch(() => setError('Failed to load boards data.'))
+    }
     fetchData()
-    const id = setInterval(fetchData, 5000)
+    const id = setInterval(fetchData, 3000)
     return () => clearInterval(id)
-  }, [])
+  }, [bucketSec])
 
   const arrivals   = data?.arrivals ?? []
   const departures = data?.departures ?? []
