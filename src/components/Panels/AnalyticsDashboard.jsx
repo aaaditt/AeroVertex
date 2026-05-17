@@ -215,7 +215,6 @@ export default function AnalyticsDashboard() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    setLoading(true)
     fetch('/api/analytics')
       .then(r => r.json())
       .then(d => { setData(d); setError(null) })

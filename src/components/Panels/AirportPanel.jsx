@@ -125,10 +125,9 @@ export default function AirportPanel() {
   const freeGates = data?.free_gates
   const flightCounts = data?.flight_counts ?? []
 
-  const totalFlights  = flightCounts.reduce((s, r) => s + Number(r.count), 0)
-  const delayedCount  = flightCounts.find(r => r.status === 'Delayed')?.count ?? 0
-  const boardingCount = flightCounts.find(r => r.status === 'Boarding')?.count ?? 0
-  const inboundCount  = flightCounts.find(r => r.status === 'Inbound')?.count ?? 0
+  const totalFlights = flightCounts.reduce((s, r) => s + Number(r.count), 0)
+  const delayedCount = flightCounts.find(r => r.status === 'Delayed')?.count ?? 0
+  const inboundCount = flightCounts.find(r => r.status === 'Inbound')?.count ?? 0
 
   return (
     <div style={{

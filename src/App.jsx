@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Shell from './components/Layout/Shell'
 import AirportMap from './components/Map/AirportMap'
 import FlightDetail from './components/Panels/FlightDetail'
@@ -14,7 +14,20 @@ export default function App() {
   const [activeModule, setActiveModule] = useState('map')
   const [selectedItem, setSelectedItem] = useState(null)
 
-  const { simSecond, speed, setSpeed, flights, setSimSecond } = useSimulation()
+  const { simSecond, speed, setSpeed, flights } = useSimulation()
+
+  // Keyboard shortcuts: Space=pause/resume, 1=3×, 2=6×, 3=12×
+  useEffect(() => {
+    function onKey(e) {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return
+      if (e.code === 'Space')  { e.preventDefault(); setSpeed(s => s === 0 ? 6 : 0) }
+      if (e.key  === '1')      setSpeed(3)
+      if (e.key  === '2')      setSpeed(6)
+      if (e.key  === '3')      setSpeed(12)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [setSpeed])
 
   function renderModule() {
     switch (activeModule) {

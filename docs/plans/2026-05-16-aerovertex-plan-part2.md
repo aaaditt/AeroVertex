@@ -497,15 +497,368 @@ Commit: `git commit -m "feat: polish, EXPLAIN optimization, error handling, resp
 
 ---
 
+---
+
+## SESSION 10 — 60fps RAF Animation Engine
+
+> **Prerequisite:** Session 9 complete (all modules built, deployed, polished).
+
+### Context
+
+The current simulation advances via `setInterval` + React state, which triggers a full re-render every second. This caps animation at ~1fps on the map. To get true 60fps smooth plane movement, we need a `requestAnimationFrame` loop that writes directly to SVG DOM elements via refs — React renders the static map structure once, and RAF handles all positional updates without triggering re-renders.
+
+### Task 23 — Replace setInterval animation with requestAnimationFrame
+
+**Files to modify:**
+
+- `src/hooks/useSimulation.js`
+- `src/components/Map/AircraftLayer.jsx`
+- `src/components/Map/AircraftIcon.jsx`
+
+**Files to create:**
+
+- `src/hooks/useRAFAnimation.js`
+
+#### useRAFAnimation.js
+
+New hook that drives the sim clock via `requestAnimationFrame` instead of `setInterval`. The sim clock must advance at the same rate (speed sim-seconds per real second) but update at 60fps instead of 1fps.
+
+```js
+import { useRef, useEffect, useCallback } from 'react'
+
+// Returns a ref holding the current simSecond (updated at 60fps) and a setter for speed.
+// Also calls onTick(simSecond) every frame so callers can read the latest value.
+export function useRAFAnimation({ speed, onTick, maxSec = 1800 }) {
+  const simRef = useRef(0)
+  const speedRef = useRef(speed)
+  const lastTsRef = useRef(null)
+  const rafRef = useRef(null)
+
+  useEffect(() => { speedRef.current = speed }, [speed])
+
+  useEffect(() => {
+    function frame(ts) {
+      if (speedRef.current === 0) {
+        lastTsRef.current = null
+        rafRef.current = requestAnimationFrame(frame)
+        return
+      }
+      if (lastTsRef.current !== null) {
+        const dtSec = (ts - lastTsRef.current) / 1000
+        simRef.current = simRef.current + speedRef.current * dtSec
+        if (simRef.current > maxSec) simRef.current = 0
+      }
+      lastTsRef.current = ts
+      onTick(simRef.current)
+      rafRef.current = requestAnimationFrame(frame)
+    }
+    rafRef.current = requestAnimationFrame(frame)
+    return () => cancelAnimationFrame(rafRef.current)
+  }, [onTick, maxSec])
+
+  return simRef
+}
+```
+
+#### useSimulation.js — changes
+
+Replace the `setInterval` clock advance with `useRAFAnimation`. Keep the `setFlights` poll every 1500ms unchanged — flight list still comes from the API. The `simSecond` React state is now only updated every ~250ms (for TopBar display) rather than every frame, to avoid expensive React re-renders from the RAF loop.
+
+```js
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { useRAFAnimation } from './useRAFAnimation'
+
+const TICK_MS = 1000
+const DISPLAY_UPDATE_MS = 250  // how often TopBar clock updates (not animation)
+
+export function useSimulation() {
+  const [simSecondDisplay, setSimSecondDisplay] = useState(0)
+  const [speed, setSpeed] = useState(6)
+  const [flights, setFlights] = useState([])
+  const simApiRef = useRef(0)           // for fetch queries (always current)
+  const lastDisplayUpdate = useRef(0)   // throttle React state updates
+
+  const onTick = useCallback((s) => {
+    simApiRef.current = s
+    const now = performance.now()
+    if (now - lastDisplayUpdate.current > DISPLAY_UPDATE_MS) {
+      setSimSecondDisplay(Math.floor(s))
+      lastDisplayUpdate.current = now
+    }
+  }, [])
+
+  const simRef = useRAFAnimation({ speed, onTick })
+
+  // Poll /api/map every 1.5s using the always-current ref value
+  useEffect(() => {
+    let cancelled = false
+    async function fetchFlights() {
+      try {
+        const res = await fetch(`/api/map?sec=${Math.floor(simApiRef.current)}`)
+        const data = await res.json()
+        if (!cancelled && Array.isArray(data)) setFlights(data)
+      } catch { /* ignore */ }
+    }
+    fetchFlights()
+    const id = setInterval(fetchFlights, 1500)
+    return () => { cancelled = true; clearInterval(id) }
+  }, [])
+
+  return { simSecond: simSecondDisplay, simRef, speed, setSpeed, flights, setSimSecond: (s) => { simRef.current = s } }
+}
+```
+
+#### AircraftIcon.jsx — add DOM ref for direct mutation
+
+Rewrite `AircraftIcon` to accept a `groupRef` prop (a `React.RefObject<SVGGElement>`). The `<g>` tag gets `ref={groupRef}`. The component no longer reads `x`, `y`, `heading` from props for its transform — those are written directly to `groupRef.current.setAttribute('transform', ...)` by the RAF loop. This avoids React re-rendering the icon on every frame.
+
+```jsx
+import { forwardRef } from 'react'
+
+const AircraftIcon = forwardRef(function AircraftIcon({ status, callsign, onClick }, ref) {
+  const color = status === 'Delayed' ? '#f59e0b' : status === 'Cancelled' ? '#ef4444' : '#3b82f6'
+  return (
+    <g ref={ref} onClick={onClick} style={{ cursor: 'pointer' }}>
+      {/* fuselage */}
+      <ellipse cx={0} cy={0} rx={5} ry={12} fill={color} />
+      {/* wings */}
+      <polygon points="-14,4 14,4 8,-2 -8,-2" fill={color} opacity={0.85} />
+      {/* tail */}
+      <polygon points="-5,10 5,10 3,14 -3,14" fill={color} opacity={0.7} />
+      {/* callsign */}
+      <text x={0} y={-16} textAnchor="middle" fontSize={8} fill="#e2e8f0" fontFamily="monospace">
+        {callsign}
+      </text>
+    </g>
+  )
+})
+
+export default AircraftIcon
+```
+
+#### AircraftLayer.jsx — drive icons via RAF
+
+`AircraftLayer` now maintains a map of `flightId → React.RefObject`. It renders all `<AircraftIcon>` elements once (or when `flights` changes). Then, inside a `useEffect` + `requestAnimationFrame` loop, it reads `simRef.current`, computes each aircraft's position via `getAircraftPosition`, and writes `transform` attributes directly to the DOM refs — no React state, no re-renders.
+
+```jsx
+import { useRef, useEffect } from 'react'
+import { getAircraftPosition, getFlightStatus } from '../../utils/interpolation'
+import AircraftIcon from './AircraftIcon'
+
+export default function AircraftLayer({ flights, simRef, onSelectFlight }) {
+  // One ref per flight, keyed by flight id
+  const iconRefs = useRef({})
+
+  // Ensure refs exist for current flights
+  flights.forEach(f => {
+    const id = f.flight_id ?? f.id
+    if (!iconRefs.current[id]) iconRefs.current[id] = { ref: { current: null }, flight: f }
+    iconRefs.current[id].flight = f
+  })
+
+  // RAF loop — writes transform directly to DOM, zero React re-renders
+  useEffect(() => {
+    let raf
+    function frame() {
+      const sec = simRef.current
+      Object.values(iconRefs.current).forEach(({ ref, flight }) => {
+        const el = ref.current
+        if (!el) return
+        const pos = getAircraftPosition(flight, sec)
+        if (pos) {
+          el.setAttribute('transform', `translate(${pos.x},${pos.y}) rotate(${pos.heading})`)
+          el.style.display = ''
+        } else {
+          el.style.display = 'none'
+        }
+      })
+      raf = requestAnimationFrame(frame)
+    }
+    raf = requestAnimationFrame(frame)
+    return () => cancelAnimationFrame(raf)
+  }, [simRef])
+
+  return (
+    <>
+      {flights.map(flight => {
+        const id = flight.flight_id ?? flight.id
+        if (!iconRefs.current[id]) iconRefs.current[id] = { ref: { current: null }, flight }
+        const entry = iconRefs.current[id]
+        const status = getFlightStatus(flight, simRef.current)
+        const label = flight.flight_number ?? flight.callsign ?? ''
+        return (
+          <AircraftIcon
+            key={id}
+            ref={entry.ref}
+            status={status}
+            callsign={label}
+            onClick={() => onSelectFlight?.(id)}
+          />
+        )
+      })}
+    </>
+  )
+}
+```
+
+**Wire up in App.jsx:** Pass `simRef` from `useSimulation()` down to `<AircraftLayer simRef={simRef} ...>`. `simSecond` (the display value) still goes to `<TopBar>`.
+
+Commit: `git commit -m "feat: replace setInterval animation with 60fps requestAnimationFrame engine"`
+
+---
+
+## SESSION 11 — Premium White Blueprint UI
+
+> **Prerequisite:** Session 10 complete (60fps animation running).
+
+### Background
+
+The current UI uses a dark navy control-room palette (`#060e1a` body, `#0a1628` panels). This session completely replaces it with a premium white/blueprint theme matching the reference design: white parchment background, charcoal line-work, grey tonal panels, orange aircraft icons, organic curved concourse terminal shapes. The dark navy theme is fully removed — no remnants.
+
+**New colour palette (replace all dark values):**
+
+| Role | Old | New |
+| --- | --- | --- |
+| Body background | `#060e1a` | `#f5f5f0` (warm off-white parchment) |
+| Panel background | `#0a1628` | `#ffffff` |
+| Panel surface | `#0f1f3d` | `#f0f0eb` |
+| Border / line-work | `#1e3a5f` | `#c8c8c0` |
+| Primary accent | `#60a5fa` (blue) | `#e67e22` (burnt orange) |
+| Secondary accent | `#3b82f6` | `#d35400` |
+| Status green | `#4ade80` | `#27ae60` |
+| Status amber | `#f59e0b` | `#e67e22` |
+| Status red | `#ef4444` | `#c0392b` |
+| Text primary | `#e2e8f0` | `#1a1a1a` |
+| Text secondary | `#4b7fbd` | `#666660` |
+| Aircraft colour | `#3b82f6` (blue) | `#e67e22` (orange) |
+| Grass / apron | `#0f2d1a` | `#dde8d0` (soft sage green) |
+| Tarmac | `#1a2a1a` | `#c8ccc8` (light grey) |
+| Runway strip | `#2a2a2a` | `#9aa09a` |
+| Taxiway | `#1e2e1e` | `#b0b8b0` |
+| Taxiway dashes | `#e2b21a` (yellow) | `#8a7a5a` (warm khaki) |
+
+### Task 24 — Retheme all layout components
+
+**Files to modify:**
+
+- `src/App.css` — replace all CSS variables and body background with new palette
+- `src/components/Layout/Shell.jsx` — update inline styles
+- `src/components/Layout/Sidebar.jsx` — update inline styles; active accent changes to orange `#e67e22`
+- `src/components/Layout/TopBar.jsx` — update all inline colours; brand text `#e67e22`; progress bar gradient `#e67e22 → #d35400`; speed button active colour `#e67e22`
+
+All monospace fonts stay. Only colours change.
+
+Commit: `git commit -m "feat: retheme layout shell to premium white palette"`
+
+---
+
+### Task 25 — Rebuild SVG airport map as white blueprint
+
+**File to rewrite:** `src/components/Map/AirportMap.jsx`
+
+This is the most important visual change. The map becomes a white drafting-table blueprint — thin charcoal lines on a light sage-green ground plane, crisp grey tarmac, warm khaki taxiway dashes. The overall aesthetic is architectural rather than cinematic.
+
+**Map layer spec (replace dark values entirely):**
+
+1. **Background** — `#dde8d0` sage green fill (the "grass" plane)
+2. **Runway strips** — `#c8ccc8` light-grey rects, `strokeWidth=28`, with `#9aa09a` edge stroke
+3. **Runway centre-line dashes** — `#ffffff` dashes, `strokeWidth=2`
+4. **Runway threshold marks** — white `#ffffff` short perpendicular lines
+5. **Runway ID labels** — `#1a1a1a` charcoal, monospace, fontSize=10
+6. **Taxiways** — `#b0b8b0` fill, `strokeWidth=14`; centre dashes `#8a7a5a` khaki, `strokeDasharray="20 10"`
+7. **Apron pads** — `#ccd8c8` pale sage rects behind each terminal
+8. **Passenger Terminal A** — `#ffffff` white rect, `stroke="#c8c8c0"` 1.5px, header stripe `#e67e22` 8px tall top edge, window row as small `#e0e8f0` rects, label `#1a1a1a`
+9. **Gate arm stubs** — thin `#c8c8c0` 2px lines from terminal edge to gate positions
+10. **Gate markers** — `#e67e22` filled circle r=5, `#ffffff` stroke 1px, label `#1a1a1a` fontSize=8
+11. **Cargo Terminal B** — `#ffffff` rect, `stroke="#c8c8c0"`, header stripe `#27ae60` (green), label `#1a1a1a`
+12. **Cargo bay markers** — `#27ae60` filled square 8×8, label `#1a1a1a`
+13. **Control tower** — charcoal `#1a1a1a` rect + overhang, radar circle `stroke="#e67e22"` animated rotation
+14. **Construction zone** — amber dashed rect, `stroke="#e67e22"` strokeDasharray, label `#e67e22`
+15. **Grid pattern defs** — very light `#d0d8c8` 50px grid (like drafting paper)
+16. **Drop shadow filter** — subtle `feDropShadow` stdDeviation=3 opacity=0.1 on terminal buildings
+
+**Concourse shape change (organic finger piers):**
+
+Replace the current rectangular terminal buildings with organic curved concourse shapes using SVG `<path>` elements with arc commands. The passenger terminal concourse should look like a finger pier plan-view — a central spine with curved "fingers" extending north toward the runway.
+
+Passenger Terminal concourse path (approximate):
+
+```svg
+M 150,255  Q 150,175 220,175  L 720,175  Q 760,175 760,215
+L 760,255  Q 760,275 720,275  L 220,275  Q 150,275 150,255  Z
+```
+
+Add concourse "gate finger" extensions — 7 stub paths extending upward (toward y=140 runway) from the spine, each 8px wide, 40px long, with rounded tips:
+
+```svg
+M gx-4,175  L gx-4,145  Q gx,135 gx+4,145  L gx+4,175  Z
+```
+
+Render one finger for each gate x position in A1–A7.
+
+**AircraftIcon colour change:**
+
+In `AircraftIcon.jsx`, change the default aircraft colour from `#3b82f6` to `#e67e22`. The status-based colour mapping becomes:
+
+- Normal / Taxiing / At_Gate: `#e67e22` (orange)
+- Delayed: `#d35400` (dark orange)
+- Cancelled: `#c0392b` (red)
+
+Commit: `git commit -m "feat: rebuild airport map SVG as white blueprint with organic concourse shape"`
+
+---
+
+### Task 26 — Retheme all panel components
+
+**Files to modify:**
+
+- `src/components/Panels/FlightDetail.jsx`
+- `src/components/Panels/ATCConsole.jsx`
+- `src/components/Panels/CargoModule.jsx`
+- `src/components/Panels/AirportPanel.jsx`
+- `src/components/Panels/BoardsPanel.jsx`
+- `src/components/Panels/AnalyticsDashboard.jsx`
+
+For each panel, replace all dark navy colour values with the white palette. Specific changes:
+
+- Panel background: `#0a1628` → `#ffffff`
+- Panel border: `#1e3a5f` → `#c8c8c0`
+- Header/section backgrounds: `#0f1f3d` → `#f0f0eb`
+- Status badges: keep colour-coding but use lighter backgrounds (tint colours at 15% opacity with charcoal text)
+- Table rows: alternate `#ffffff` / `#f8f8f4`
+- Drawer backdrop overlay: `rgba(0,0,0,0.15)` (lighter scrim on white theme)
+- All text: `#e2e8f0` → `#1a1a1a` (primary), `#4b7fbd` → `#666660` (secondary)
+- Action buttons: primary `#e67e22` background, `#ffffff` text
+- Progress bars: fill `#e67e22`
+
+Boards panel: FIDS display uses `#1a1a1a` text on `#f0f0eb` rows with `#e67e22` for the "On Time" status and `#c0392b` for "Delayed". Classic airport-board aesthetic.
+
+Commit: `git commit -m "feat: retheme all panel components to white blueprint palette"`
+
+---
+
+### Task 27 — Final white-theme polish
+
+- Update `<title>` and any meta tags in `index.html` if present
+- Verify no dark navy hex values remain anywhere — run `grep -r "0a1628\|060e1a\|0f1f3d\|1e3a5f" src/` and fix any stragglers
+- Run `npm run lint` and fix errors
+- Test all panels open/close correctly with new palette
+- Test aircraft icons are visible (orange on sage green should have good contrast)
+- Verify 60fps animation still runs (Session 10 should be untouched by palette changes)
+
+Commit: `git commit -m "feat: complete white blueprint theme — premium UI overhaul finished"`
+
+---
+
 ## Full Task Summary
 
 | # | Task | Session | Status |
 |---|------|---------|--------|
 | 1–10 | Scaffold, DB schema, triggers, functions, procedures, views, seed | 1 | ✅ Done |
 | 11 | 9 API endpoints | 3 | — |
-| 12 | Layout shell (sidebar + topbar) | 4 | — |
-| 13 | SVG airport map (static, real coordinates) | 4 | — |
-| 14 | Simulation engine + aircraft animation | 5 | — |
+| 12 | Layout shell (sidebar + topbar) | 4 | ✅ Done |
+| 13 | SVG airport map (static, real coordinates) | 4 | ✅ Done |
+| 14 | Simulation engine + aircraft animation | 5 | ✅ Done |
 | 15 | Flight detail drawer | 6 | — |
 | 16 | ATC tower console | 7 | — |
 | 17 | Cargo module | 7 | — |
@@ -514,3 +867,8 @@ Commit: `git commit -m "feat: polish, EXPLAIN optimization, error handling, resp
 | 20 | Analytics dashboard | 8 | — |
 | 21 | Vercel deployment | 9 | — |
 | 22 | Polish + EXPLAIN optimization | 9 | — |
+| 23 | 60fps RAF animation engine | 10 | — |
+| 24 | Retheme layout shell (white palette) | 11 | — |
+| 25 | Rebuild SVG map as white blueprint + organic concourse | 11 | — |
+| 26 | Retheme all panel components | 11 | — |
+| 27 | Final white-theme polish | 11 | — |

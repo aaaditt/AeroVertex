@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 const STATUS_COLORS = {
   Inbound:   { bg: '#1e3a5f', text: '#60a5fa' },
@@ -297,25 +297,23 @@ function ActionSection({ label, accent, children }) {
 // ── Main component ──────────────────────────────────────────────────────────
 export default function FlightDetail({ flightId, onClose }) {
   const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   const isOpen = flightId != null
 
-  function fetchData() {
+  const fetchData = useCallback(() => {
     if (!flightId) return
-    setLoading(true)
-    setError(null)
     fetch(`/api/flight/${flightId}`)
       .then(r => r.json())
-      .then(d => { setData(d); setLoading(false) })
+      .then(d => { setData(d); setError(null); setLoading(false) })
       .catch(() => { setError('Failed to load flight data.'); setLoading(false) })
-  }
+  }, [flightId])
 
   useEffect(() => {
-    if (!flightId) { setData(null); return }
+    if (!flightId) return
     fetchData()
-  }, [flightId])
+  }, [flightId, fetchData])
 
   const sc = data ? statusStyle(data.status) : statusStyle('default')
 

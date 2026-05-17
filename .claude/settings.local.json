@@ -35,7 +35,18 @@
       "PowerShell($body = '{\"flight_id\":1,\"delay_sec\":300}' | ConvertTo-Json -Compress; $r = Invoke-WebRequest -Uri 'http://localhost:3333/api/delay-flight' -Method POST -Body '{\"flight_id\":1,\"delay_sec\":300}' -ContentType 'application/json' -UseBasicParsing -TimeoutSec 15; \"DELAY $\\($r.StatusCode\\): $\\($r.Content\\)\")",
       "PowerShell($r = Invoke-WebRequest -Uri 'http://localhost:3333/api/generate-summary' -Method POST -Body '{\"flight_id\":1}' -ContentType 'application/json' -UseBasicParsing -TimeoutSec 15; \"SUMMARY $\\($r.StatusCode\\): \" + $r.Content.Substring\\(0,[Math]::Min\\(400,$r.Content.Length\\)\\))",
       "PowerShell($r = Invoke-WebRequest -Uri 'http://localhost:3333/api/delay-flight' -Method POST -Body '{\"flight_id\":5,\"delay_sec\":120}' -ContentType 'application/json' -UseBasicParsing -TimeoutSec 15; \"DELAY $\\($r.StatusCode\\): $\\($r.Content\\)\")",
-      "PowerShell($r = Invoke-WebRequest -Uri 'http://localhost:3333/api/assign-equipment' -Method POST -Body '{\"flight_id\":10,\"equipment_id\":1}' -ContentType 'application/json' -UseBasicParsing -TimeoutSec 15; \"ASSIGN $\\($r.StatusCode\\): $\\($r.Content\\)\")"
+      "PowerShell($r = Invoke-WebRequest -Uri 'http://localhost:3333/api/assign-equipment' -Method POST -Body '{\"flight_id\":10,\"equipment_id\":1}' -ContentType 'application/json' -UseBasicParsing -TimeoutSec 15; \"ASSIGN $\\($r.StatusCode\\): $\\($r.Content\\)\")",
+      "Skill(superpowers:executing-plans)",
+      "Skill(antigravity-awesome-skills:frontend-design)",
+      "Bash(mkdir -p \"C:\\\\Aadit\\\\Personal\\\\code-ide\\\\antigravity\\\\airport-management\\\\src\\\\components\\\\Layout\")",
+      "Bash(mkdir -p \"C:\\\\Aadit\\\\Personal\\\\code-ide\\\\antigravity\\\\airport-management\\\\src\\\\components\\\\Map\")",
+      "Bash(Remove-Item \"C:\\\\Aadit\\\\Personal\\\\code-ide\\\\antigravity\\\\airport-management\\\\src\\\\AirportHero.jsx\" -Force)",
+      "Bash(Write-Output \"Deleted\")",
+      "Bash(npx vite *)",
+      "Skill(superpowers:verification-before-completion)",
+      "Bash(vercel whoami *)",
+      "Bash(vercel ls *)",
+      "Bash(vercel env *)"
     ]
   }
 }

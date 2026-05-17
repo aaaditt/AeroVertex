@@ -1,19 +1,21 @@
-// Maps sim seconds (0–86400) to a clock string "06:00"–"22:00"
+// sim-second 0 = 06:00, sim-second 1800 = 22:00  (16 real hours compressed)
 function simSecondToTime(s) {
-  const totalMinutes = Math.floor((s / 86400) * (22 * 60 - 6 * 60)) + 6 * 60
+  const totalMinutes = Math.floor((s / 1800) * (16 * 60)) + 6 * 60
   const h = Math.floor(totalMinutes / 60).toString().padStart(2, '0')
   const m = (totalMinutes % 60).toString().padStart(2, '0')
   return `${h}:${m}`
 }
 
 const SPEED_OPTIONS = [
-  { label: '⏸', value: 0 },
-  { label: '1×', value: 1 },
-  { label: '2×', value: 2 },
+  { label: '⏸',  value: 0  },
+  { label: '3×',  value: 3  },
+  { label: '6×',  value: 6  },
+  { label: '12×', value: 12 },
 ]
 
-export default function TopBar({ currentSimSecond = 0, flightCount = 0, simSpeed = 1, onSetSpeed }) {
+export default function TopBar({ currentSimSecond = 0, flightCount = 0, simSpeed = 6, onSetSpeed }) {
   const timeStr = simSecondToTime(currentSimSecond)
+  const progress = Math.round((currentSimSecond / 1800) * 100)
 
   return (
     <header style={{
@@ -23,8 +25,9 @@ export default function TopBar({ currentSimSecond = 0, flightCount = 0, simSpeed
       display: 'flex',
       alignItems: 'center',
       padding: '0 20px',
-      gap: 24,
+      gap: 20,
       flexShrink: 0,
+      position: 'relative',
     }}>
       {/* Brand */}
       <span style={{
@@ -34,14 +37,15 @@ export default function TopBar({ currentSimSecond = 0, flightCount = 0, simSpeed
         color: '#60a5fa',
         letterSpacing: '2px',
         userSelect: 'none',
+        whiteSpace: 'nowrap',
       }}>
         ✈ AEROVERTEX
       </span>
 
-      <div style={{ width: 1, height: 24, background: '#1e3a5f' }} />
+      <div style={{ width: 1, height: 24, background: '#1e3a5f', flexShrink: 0 }} />
 
       {/* Sim clock */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
         <span style={{ fontSize: 10, fontFamily: 'monospace', color: '#4b7fbd', letterSpacing: 1 }}>SIM TIME</span>
         <span style={{
           fontFamily: 'monospace',
@@ -55,10 +59,28 @@ export default function TopBar({ currentSimSecond = 0, flightCount = 0, simSpeed
         </span>
       </div>
 
-      <div style={{ width: 1, height: 24, background: '#1e3a5f' }} />
+      {/* Progress bar */}
+      <div style={{
+        flex: 1,
+        height: 3,
+        background: '#1e3a5f',
+        borderRadius: 2,
+        overflow: 'hidden',
+        maxWidth: 200,
+      }}>
+        <div style={{
+          height: '100%',
+          width: `${progress}%`,
+          background: 'linear-gradient(90deg, #3b82f6, #60a5fa)',
+          borderRadius: 2,
+          transition: 'width 0.8s linear',
+        }} />
+      </div>
+
+      <div style={{ width: 1, height: 24, background: '#1e3a5f', flexShrink: 0 }} />
 
       {/* Flight count */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
         <span style={{ fontSize: 10, fontFamily: 'monospace', color: '#4b7fbd', letterSpacing: 1 }}>FLIGHTS</span>
         <span style={{
           fontFamily: 'monospace',
@@ -71,23 +93,24 @@ export default function TopBar({ currentSimSecond = 0, flightCount = 0, simSpeed
         </span>
       </div>
 
-      {/* Speed controls — pushed to right */}
-      <div style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
+      {/* Speed controls */}
+      <div style={{ marginLeft: 'auto', display: 'flex', gap: 4, flexShrink: 0 }}>
         {SPEED_OPTIONS.map(opt => (
           <button
             key={opt.value}
             onClick={() => onSetSpeed?.(opt.value)}
             style={{
-              padding: '4px 12px',
+              padding: '4px 10px',
               background: simSpeed === opt.value ? '#1e3a5f' : 'transparent',
               border: '1px solid',
               borderColor: simSpeed === opt.value ? '#60a5fa' : '#1e3a5f',
               color: simSpeed === opt.value ? '#60a5fa' : '#4b7fbd',
               fontFamily: 'monospace',
-              fontSize: 12,
+              fontSize: 11,
               cursor: 'pointer',
               borderRadius: 3,
               transition: 'all 0.15s',
+              minWidth: 36,
             }}
           >
             {opt.label}

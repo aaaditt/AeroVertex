@@ -34,7 +34,8 @@ export const MAP_CONFIG = {
   taxiways: [
     { x1: 800, y1: 140, x2: 800, y2: 560 }, // east spine
     { x1: 200, y1: 140, x2: 200, y2: 560 }, // west spine
-    { x1: 200, y1: 350, x2: 800, y2: 350 }, // mid horizontal
+    { x1: 200, y1: 350, x2: 800, y2: 350 }, // mid horizontal (pax routing)
     { x1: 200, y1: 420, x2: 800, y2: 420 }, // cargo horizontal
+    { x1: 500, y1: 140, x2: 500, y2: 350 }, // centre mid-connector
   ],
 }
