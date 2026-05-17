@@ -15,7 +15,7 @@ export default function Shell({
       display: 'flex',
       flexDirection: 'column',
       height: '100vh',
-      background: '#060e1a',
+      background: '#f5f5f0',
       overflow: 'hidden',
     }}>
       <TopBar
@@ -31,7 +31,7 @@ export default function Shell({
         <main style={{
           flex: 1,
           overflow: 'auto',
-          background: '#060e1a',
+          background: '#f5f5f0',
         }}>
           {children}
         </main>
