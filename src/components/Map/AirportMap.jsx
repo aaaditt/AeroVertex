@@ -1,4 +1,5 @@
 import { MAP_CONFIG as C } from './mapConfig'
+import AircraftLayer from './AircraftLayer'
 
 // ── small helpers ──────────────────────────────────────────────────────────
 
@@ -43,6 +44,8 @@ function ThresholdMarks({ x1, y1, x2, y2 }) {
 // ── main component ─────────────────────────────────────────────────────────
 
 export default function AirportMap({
+  flights = [],
+  simSecond = 0,
   onSelectFlight,
   onSelectGate,
   onSelectCargo,
@@ -238,6 +241,9 @@ export default function AirportMap({
         {/* ── Perimeter fence ─────────────────────────────────────────── */}
         <rect x={10} y={10} width={980} height={680}
           fill="none" stroke="#1e3a5f" strokeWidth={1} strokeDasharray="6 6" opacity={0.4} />
+
+        {/* ── LAYER 12: Aircraft ──────────────────────────────────────── */}
+        <AircraftLayer flights={flights} simSecond={simSecond} />
       </svg>
     </div>
   )
