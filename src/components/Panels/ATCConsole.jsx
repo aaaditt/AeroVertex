@@ -151,7 +151,7 @@ function EventRow({ event }) {
       </div>
       <span /> {/* spacer */}
       <span style={{ color: '#475569', fontFamily: 'monospace', fontSize: 10, whiteSpace: 'nowrap' }}>
-        {fmtSecs(event.sim_second)}
+        {fmtSecs(event.sim_logged_sec)}
       </span>
     </div>
   )
@@ -175,13 +175,14 @@ export default function ATCConsole() {
     return () => clearInterval(id)
   }, [])
 
-  const flights = data?.flights ?? []
-  const events  = data?.events ?? []
+  // API returns flights grouped by status as an object; flatten per queue
+  const grouped  = data?.flights ?? {}
+  const events   = data?.recent_events ?? []
 
-  const inbound   = flights.filter(f => f.status === 'Inbound' || f.status === 'Taxiing')
+  const inbound   = [...(grouped.Inbound ?? []), ...(grouped.Taxiing ?? [])]
     .sort((a, b) => (a.sim_arrival_sec ?? 0) - (b.sim_arrival_sec ?? 0))
-  const onGround  = flights.filter(f => f.status === 'At_Gate' || f.status === 'Boarding')
-  const departure = flights.filter(f => f.status === 'Pushback')
+  const onGround  = [...(grouped.At_Gate ?? []), ...(grouped.Boarding ?? [])]
+  const departure = [...(grouped.Pushback ?? [])]
     .sort((a, b) => (a.sim_departure_sec ?? 0) - (b.sim_departure_sec ?? 0))
 
   return (

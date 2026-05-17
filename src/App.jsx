@@ -4,23 +4,11 @@ import AirportMap from './components/Map/AirportMap'
 import FlightDetail from './components/Panels/FlightDetail'
 import ATCConsole from './components/Panels/ATCConsole'
 import CargoModule from './components/Panels/CargoModule'
+import AirportPanel from './components/Panels/AirportPanel'
+import BoardsPanel from './components/Panels/BoardsPanel'
+import AnalyticsDashboard from './components/Panels/AnalyticsDashboard'
 import { useSimulation } from './hooks/useSimulation'
 import './App.css'
-
-const PLACEHOLDER_STYLE = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  height: '100%',
-  color: '#4b7fbd',
-  fontFamily: 'monospace',
-  fontSize: 14,
-  letterSpacing: 2,
-}
-
-function PlaceholderModule({ label }) {
-  return <div style={PLACEHOLDER_STYLE}>{label} — Coming in Session 5+</div>
-}
 
 export default function App() {
   const [activeModule, setActiveModule] = useState('map')
@@ -39,14 +27,14 @@ export default function App() {
             onSelectGate={id => setSelectedItem({ type: 'gate', id })}
             onSelectCargo={() => setActiveModule('cargo')}
             onSelectTower={() => setActiveModule('atc')}
-            onSelectAirport={() => setSelectedItem({ type: 'airport' })}
+            onSelectAirport={() => setActiveModule('airport')}
           />
         )
       case 'atc':     return <ATCConsole />
       case 'cargo':   return <CargoModule />
-      case 'airport': return <PlaceholderModule label="AIRPORT ADMIN" />
-      case 'boards':  return <PlaceholderModule label="FLIGHT BOARDS" />
-      case 'stats':   return <PlaceholderModule label="STATISTICS" />
+      case 'airport': return <AirportPanel />
+      case 'boards':  return <BoardsPanel />
+      case 'stats':   return <AnalyticsDashboard />
       default:        return null
     }
   }
