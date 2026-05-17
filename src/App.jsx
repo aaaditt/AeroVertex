@@ -2,6 +2,8 @@ import { useState } from 'react'
 import Shell from './components/Layout/Shell'
 import AirportMap from './components/Map/AirportMap'
 import FlightDetail from './components/Panels/FlightDetail'
+import ATCConsole from './components/Panels/ATCConsole'
+import CargoModule from './components/Panels/CargoModule'
 import { useSimulation } from './hooks/useSimulation'
 import './App.css'
 
@@ -35,13 +37,13 @@ export default function App() {
             simSecond={simSecond}
             onSelectFlight={id => setSelectedItem({ type: 'flight', id })}
             onSelectGate={id => setSelectedItem({ type: 'gate', id })}
-            onSelectCargo={() => setSelectedItem({ type: 'cargo' })}
-            onSelectTower={() => setSelectedItem({ type: 'tower' })}
+            onSelectCargo={() => setActiveModule('cargo')}
+            onSelectTower={() => setActiveModule('atc')}
             onSelectAirport={() => setSelectedItem({ type: 'airport' })}
           />
         )
-      case 'atc':     return <PlaceholderModule label="ATC CONTROL" />
-      case 'cargo':   return <PlaceholderModule label="CARGO OPS" />
+      case 'atc':     return <ATCConsole />
+      case 'cargo':   return <CargoModule />
       case 'airport': return <PlaceholderModule label="AIRPORT ADMIN" />
       case 'boards':  return <PlaceholderModule label="FLIGHT BOARDS" />
       case 'stats':   return <PlaceholderModule label="STATISTICS" />
