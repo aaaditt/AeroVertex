@@ -1,4 +1,4 @@
-# AeroVertex Implementation Plan — Part 1 (Phases 1–5)
+# AeroVertex Implementation Plan — Part 1 (Sessions 1–3)
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
@@ -10,167 +10,170 @@
 
 ---
 
-## Task 1: Initialize Vite + React Project
+## SESSION 1 STATUS — COMPLETE ✅
 
-**Files:** `package.json`, `vite.config.js`, `index.html`, `src/main.jsx`, `src/App.jsx`, `src/index.css`
+Everything in Session 1 has been built and committed. Do not re-run or re-create any of these.
 
-**Step 1:** Scaffold with `npx -y create-vite@latest ./ --template react`
+### What was done
 
-**Step 2:** Install deps: `npm install && npm install -D tailwindcss @tailwindcss/vite && npm install mysql2 @faker-js/faker dotenv`
+**Task 1 — Scaffold** ✅
+- `package.json`, `vite.config.js`, `index.html`, `src/main.jsx`, `src/index.css`
+- Vite + React + Tailwind installed and working
+- Commit: `feat: scaffold Vite + React + Tailwind`
 
-**Step 3:** Configure Tailwind in `vite.config.js` (add `tailwindcss()` plugin). Set `src/index.css` to `@import "tailwindcss";`
+**Task 2 — Railway MySQL connection** ✅
+- `.env.local` with DB credentials
+- `db/connection.js` — mysql2/promise pool
+- `db/test-connection.js` — verified connected
 
-**Step 4:** Verify: `npm run dev` → loads at localhost:5173
+**Task 3 — Schema (17 tables)** ✅
+- `db/schema.sql` — all 17 tables in dependency order, InnoDB, correct FKs
+- `db/run-schema.js` — runner script
+- Commit: `feat: add 17-table schema, indexes, and DB runner scripts`
 
-**Step 5:** `git init && git add -A && git commit -m "feat: scaffold Vite + React + Tailwind"`
+**Task 4 — Indexes** ✅
+- `db/indexes.sql` — all performance indexes from blueprint Section 11
+- `db/run-indexes.js` — runner
 
----
+**Task 5 — Triggers** ✅
+- `db/triggers.sql` — all 4 triggers (gate_buffer_check, gate_size_check, log_flight_status, release_equipment)
 
-## Task 2: Set Up Railway MySQL
+**Task 6 — Functions** ✅
+- `db/functions.sql` — all 3 functions (fn_turnaround_sec, fn_free_gates, fn_runway_utilization)
 
-**Step 1:** Create Railway project at railway.app, add MySQL service, copy credentials.
+**Task 7 — Stored Procedures** ✅
+- `db/procedures.sql` — all 4 procedures (sp_propagate_delay, sp_assign_equipment, sp_generate_turnaround_summary, sp_refresh_live_map)
 
-**Step 2:** Create `.env.local` with `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_DATABASE`.
+**Task 8 — Views** ✅
+- `db/views.sql` — v_arrivals_board, v_departures_board
 
-**Step 3:** Create `db/connection.js` with `mysql2/promise` pool.
+**Task 9 — Master Setup Script** ✅
+- `db/setup-all.js` — runs schema → indexes → views → triggers → functions → procedures in order
 
-**Step 4:** Create `db/test-connection.js`, run `node db/test-connection.js` → expect "Connected!"
-
-**Step 5:** Commit: `git add db/ && git commit -m "feat: add Railway MySQL connection"`
-
----
-
-## Task 3: Database Schema (17 Tables)
-
-**File:** `db/schema.sql`
-
-Create all tables in dependency order (drops first for re-runnability):
-
-1. Terminal, 2. Airline, 3. AircraftType, 4. AircraftFleet, 5. Runway, 6. RunwaySlot, 7. Gate, 8. CargoBay, 9. GroundEquipment, 10. Flight (central), 11. GroundServiceAssignment, 12. ServiceLog, 13. PassengerFlowLog, 14. EventLog, 15. CargoShipment, 16. TurnaroundCharge, 17. live_map_cache
-
-All with exact columns from blueprint Section 11. All ENGINE=InnoDB with proper FKs.
-
-Create `db/run-schema.js` to execute. Run → expect 17 tables. Commit.
-
----
-
-## Task 4: Indexes
-
-**File:** `db/indexes.sql`
-
-Key indexes: `Flight(gate_id)`, `Flight(status)`, `Flight(sim_arrival_sec)`, `Flight(aircraft_id)`, `RunwaySlot(runway_id, sim_slot_start_sec)`, `ServiceLog(flight_id)`, `EventLog(flight_id)`, `CargoShipment(flight_id)`, `GroundServiceAssignment(flight_id)`, `Flight(bay_id)`.
+**Task 10 — Seed Script** ✅
+- `db/seed.js` — fully implemented with faker, inserts all reference data and 50-70 flights
 
 ---
 
-## Task 5: Triggers
+## SESSION 2 STATUS — PARTIAL ✅ (hero map built, needs integration later)
 
-**File:** `db/triggers.sql`
+Session 2 built a standalone animated hero map as a proof-of-concept. It is **not** the final database-driven map — that is built in Session 4. Do not delete what was built; it will be replaced/refactored in Session 4.
 
-4 triggers from blueprint Section 13.1:
-1. `gate_buffer_check` — BEFORE INSERT on Flight, 15-min (900 sim-sec) turnaround buffer
-2. `gate_size_check` — BEFORE INSERT on Flight, aircraft size ≤ gate max
-3. `log_flight_status` — AFTER UPDATE on Flight, writes to EventLog
-4. `release_equipment` — AFTER UPDATE on GroundServiceAssignment, marks equipment Available
+### What was built
 
-Use `DELIMITER //` syntax. Runner script strips delimiters and executes individually via mysql2.
+- `src/AirportHero.jsx` — self-contained SVG airport map with:
+  - 2 full-width runways (y=120 and y=580 on a 1000×700 viewBox)
+  - Taxiway grid, 2 terminal buildings, 10 gates with jetbridges
+  - 3 cargo bays, control tower, wind sock, construction zones
+  - 4 hardcoded looping animated planes (no API, no DB)
+  - Legend showing callsign / AT GATE / TAXIING status
+- `src/App.jsx` — replaced Vite scaffold with header + `<AirportHero />` + footer
+- `src/App.css` — dark navy airport control-room theme
 
----
+### What this is NOT yet
+- Not connected to the database or API
+- Not reading from `live_map_cache`
+- Not using the seed data's actual `map_x/map_y` coordinates
+- Not using the `useSimulation` hook or `currentSimSecond` clock
 
-## Task 6: Functions
-
-**File:** `db/functions.sql`
-
-3 functions from blueprint Section 13.3:
-1. `fn_turnaround_sec(p_flight_id)` → INT (gate_out - gate_in)
-2. `fn_free_gates(p_from, p_to)` → INT (gates not occupied in window)
-3. `fn_runway_utilization(p_runway_id)` → DECIMAL (% slots used)
-
----
-
-## Task 7: Stored Procedures
-
-**File:** `db/procedures.sql`
-
-4 procedures from blueprint Sections 13.2 + 13.4:
-1. `sp_propagate_delay(p_flight_id, p_delay_sec)` — recursive delay cascade
-2. `sp_assign_equipment(p_flight_id, p_equipment_id)` — row-locking with FOR UPDATE
-3. `sp_generate_turnaround_summary(p_flight_id)` — billing calculation
-4. `sp_refresh_live_map()` — rebuild live_map_cache
-
-Include `SET @@max_sp_recursion_depth = 50;`
+**The dark theme from Session 2 is kept.** The design doc's "light grey" preference is overridden — the dark navy control-room aesthetic is a better fit for an airport operations system and is already built.
 
 ---
 
-## Task 8: Views
+## SESSION 3 — API Layer
 
-**File:** `db/views.sql`
+> **Prerequisite:** Session 1 complete (DB built and seeded). Session 2 is irrelevant to this session — it is frontend-only.
 
-```sql
-CREATE OR REPLACE VIEW v_arrivals_board AS
-  SELECT flight_number, origin_airport, sim_arrival_sec, status, gate_id
-  FROM Flight WHERE flight_kind = 'Arrival';
+### Coordinate reference — frozen from seed script
 
-CREATE OR REPLACE VIEW v_departures_board AS
-  SELECT flight_number, destination_airport, sim_departure_sec, status, gate_id
-  FROM Flight WHERE flight_kind = 'Departure';
+These are the exact `map_x/map_y` values inserted by `db/seed.js`. The API and front-end must use these. Do not invent new coordinates.
+
+**Runways (map_x1, map_y1 → map_x2, map_y2 on 1000×700 canvas):**
+- `09L/27R`: x1=50, y1=140, x2=950, y2=140
+- `09R/27L`: x1=50, y1=560, x2=950, y2=560
+
+**Terminals (map_x, map_y — centre point):**
+- Passenger Terminal A: x=500, y=200
+- Cargo Terminal B: x=500, y=480
+
+**Gates (A-wing at map_y=235, B-wing at map_y=170):**
+- A1(185,235), A2(255,235), A3(325,235), A4(395,235), A5(465,235), A6(535,235), A7(605,235)
+- B1(205,170), B2(295,170), B3(385,170), B4(475,170), B5(565,170), B6(655,170), B7(745,170)
+
+**Cargo Bays (map_y=495):**
+- C1(310,495), C2(390,495), C3(470,495), C4(550,495), C5(630,495), C6(710,495)
+
+---
+
+### Task 11 — API Layer (9 Endpoints)
+
+**Files to create:**
+- `api/_db.js` — shared mysql2 pool (reads from env vars, reused by all endpoints)
+- `api/map.js`
+- `api/flight/[id].js`
+- `api/atc.js`
+- `api/cargo.js`
+- `api/airport.js`
+- `api/boards.js`
+- `api/assign-equipment.js`
+- `api/generate-summary.js`
+- `api/delay-flight.js`
+- `vercel.json` — rewrites so `/api/*` routes to the functions
+
+**Endpoint specs:**
+
+| File | Method | SQL / Call | Returns |
+|------|--------|-----------|---------|
+| `map.js` | GET `?sec=N` | `SELECT * FROM live_map_cache WHERE sim_arrival_sec <= ? AND sim_departure_sec >= ?` | Array of active flights with gate_x, gate_y, bay_x, bay_y |
+| `flight/[id].js` | GET | JOIN: Flight + Airline + AircraftFleet + AircraftType + Gate + ServiceLog | Full flight detail object |
+| `atc.js` | GET | Flights grouped by status (Inbound/Taxiing/At_Gate/Pushback) + 20 most recent EventLog rows | ATC console data |
+| `cargo.js` | GET | CargoBay LEFT JOIN Flight + CargoShipment | All bays and shipments |
+| `airport.js` | GET | Terminal + Runway + `fn_free_gates(?,?)` + flight counts | Airport summary |
+| `boards.js` | GET | `SELECT * FROM v_arrivals_board` + `SELECT * FROM v_departures_board` | Both boards |
+| `assign-equipment.js` | POST `{flight_id, equipment_id}` | `CALL sp_assign_equipment(?, ?)` | `{ok: true}` or error |
+| `generate-summary.js` | POST `{flight_id}` | `CALL sp_generate_turnaround_summary(?)` + SELECT from TurnaroundCharge | Charge breakdown |
+| `delay-flight.js` | POST `{flight_id, delay_sec}` | `CALL sp_propagate_delay(?, ?)` | `{ok: true}` or error |
+
+**`api/_db.js` pattern:**
+```js
+import mysql from 'mysql2/promise';
+const pool = mysql.createPool({
+  host:     process.env.MYSQL_HOST,
+  port:     process.env.MYSQL_PORT,
+  user:     process.env.MYSQL_USER,
+  password: process.env.MYSQL_PASSWORD,
+  database: process.env.MYSQL_DATABASE,
+  waitForConnections: true,
+  connectionLimit: 5,
+});
+export default pool;
 ```
 
----
+**`vercel.json`:**
+```json
+{
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" }
+  ]
+}
+```
 
-## Task 9: Master DB Setup Script
+**Testing:** Run `npx vercel dev` and manually hit each endpoint with curl or a browser. Verify:
+- `GET /api/map?sec=500` returns flights active at sim-second 500
+- `GET /api/flight/1` returns the full detail join
+- `GET /api/boards` returns two arrays
 
-**File:** `db/setup-all.js`
+**Error handling on every endpoint:**
+```js
+try {
+  // ... query
+} catch (err) {
+  res.status(500).json({ error: err.message });
+}
+```
 
-Runs in order: schema.sql → indexes.sql → views.sql, then triggers/functions/procedures (splitting on `//` delimiter). Single command: `node db/setup-all.js` → all objects created.
-
----
-
-## Task 10: Seed Script
-
-**File:** `db/seed.js`
-
-Node.js script using `@faker-js/faker` and `mysql2`:
-
-**Static data:** 2 terminals, 6 airlines, 10 aircraft types, 30 aircraft, 2 runways with slots, 14 gates (sized 1-5), 6 cargo bays, 8 equipment pieces.
-
-**Flights (50-70):** ~40 passenger + ~15 cargo. Ensures:
-- `sim_arrival < sim_gate_in < sim_gate_out < sim_departure`
-- Same aircraft's flights in forward time order, no overlap
-- Gate assignments respect size categories
-- Runway slots assigned
-
-**Related data:** ServiceLogs, PassengerFlowLogs, CargoShipments, initial EventLogs.
-
-**Conflict tests:** 2-3 deliberate gate-buffer violations (caught by trigger), 1 size violation.
-
-**Final step:** `CALL sp_refresh_live_map()`.
-
-Map coordinates use 0-1000 × 0-700 viewBox.
-
-Run: `node db/seed.js` → expect populated tables, rejected conflicts logged.
+**Commit:** `git add api/ vercel.json && git commit -m "feat: add all 9 API endpoints"`
 
 ---
 
-## Task 11: API Layer (9 Endpoints)
-
-**Files:** `api/_db.js` (shared pool), then one file per endpoint.
-
-| Endpoint | Method | SQL |
-|----------|--------|-----|
-| `/api/map?sec=N` | GET | `SELECT * FROM live_map_cache WHERE sim_arrival_sec <= ? AND sim_departure_sec >= ?` |
-| `/api/flight/[id]` | GET | Multi-JOIN: Flight+Airline+AircraftFleet+AircraftType+Gate+ServiceLog |
-| `/api/atc` | GET | Flights by status groups + recent EventLog |
-| `/api/cargo` | GET | CargoBay + Flight + CargoShipment JOINs |
-| `/api/airport` | GET | Terminal+Runway+capacity summary |
-| `/api/boards` | GET | `v_arrivals_board` + `v_departures_board` views |
-| `/api/assign-equipment` | POST | `CALL sp_assign_equipment(?, ?)` |
-| `/api/generate-summary` | POST | `CALL sp_generate_turnaround_summary(?)` |
-| `/api/delay-flight` | POST | `CALL sp_propagate_delay(?, ?)` |
-
-Create `vercel.json` with rewrites. Test with `npx vercel dev`.
-
-Commit: `git add api/ vercel.json && git commit -m "feat: add all 9 API endpoints"`
-
----
-
-*Continued in Part 2: Front-End (Phases 6-11)*
+*Continued in Part 2: Front-End (Sessions 4–9)*

@@ -1,6 +1,6 @@
 -- AeroVertex — performance indexes
 -- These speed up the map query, status filters, and join paths.
--- PKs are already indexed; these cover the non-PK query hotspots.
+-- PKs are already indexed — these cover the non-PK query hotspots.
 
 CREATE INDEX idx_flight_gate_id        ON Flight (gate_id);
 CREATE INDEX idx_flight_status         ON Flight (status);
