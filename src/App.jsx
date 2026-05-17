@@ -43,11 +43,11 @@ export default function App() {
             onSelectAirport={() => setActiveModule('airport')}
           />
         )
-      case 'atc':     return <ATCConsole />
-      case 'cargo':   return <CargoModule />
-      case 'airport': return <AirportPanel />
-      case 'boards':  return <BoardsPanel />
-      case 'stats':   return <AnalyticsDashboard />
+      case 'atc':     return <ATCConsole simSecond={simSecond} />
+      case 'cargo':   return <CargoModule simSecond={simSecond} />
+      case 'airport': return <AirportPanel simSecond={simSecond} />
+      case 'boards':  return <BoardsPanel simSecond={simSecond} />
+      case 'stats':   return <AnalyticsDashboard simSecond={simSecond} />
       default:        return null
     }
   }
