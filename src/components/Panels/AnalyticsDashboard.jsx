@@ -1,19 +1,24 @@
 import { useState, useEffect } from 'react'
 
-// ── Shared table primitives ─────────────────────────────────────────────────
 const thBase = {
   padding: '7px 12px',
   textAlign: 'left',
-  color: '#475569',
+  color: '#666660',
   fontFamily: 'monospace',
   fontSize: 10,
   fontWeight: 700,
   letterSpacing: 1,
-  borderBottom: '1px solid #1e3a5f',
-  background: '#080f1e',
+  borderBottom: '1px solid #c8c8c0',
+  background: '#f0f0eb',
   whiteSpace: 'nowrap',
 }
-const tdBase = { padding: '7px 12px', fontSize: 12, verticalAlign: 'middle', borderBottom: '1px solid #0d1e38' }
+const tdBase = {
+  padding: '7px 12px',
+  fontSize: 12,
+  verticalAlign: 'middle',
+  borderBottom: '1px solid #f0f0eb',
+  color: '#1a1a1a',
+}
 
 function Th({ right, children }) {
   return <th style={right ? { ...thBase, textAlign: 'right' } : thBase}>{children}</th>
@@ -23,7 +28,7 @@ function Td({ right, accent, children }) {
     <td style={{
       ...tdBase,
       textAlign: right ? 'right' : 'left',
-      color: accent ?? '#e2e8f0',
+      color: accent ?? '#1a1a1a',
       fontFamily: accent ? 'monospace' : undefined,
     }}>
       {children}
@@ -31,19 +36,13 @@ function Td({ right, accent, children }) {
   )
 }
 
-// ── Section wrapper ─────────────────────────────────────────────────────────
-function Section({ title, accent = '#60a5fa', badge, error, children }) {
+function Section({ title, accent = '#e67e22', badge, error, children }) {
   return (
-    <div style={{
-      background: '#0d1e38',
-      border: `1px solid #1e3a5f`,
-      borderRadius: 6,
-      overflow: 'hidden',
-    }}>
+    <div style={{ background: '#ffffff', border: '1px solid #c8c8c0', borderRadius: 6, overflow: 'hidden' }}>
       <div style={{
         padding: '10px 14px',
-        borderBottom: '1px solid #1e3a5f',
-        background: '#0a1628',
+        borderBottom: '1px solid #c8c8c0',
+        background: '#f0f0eb',
         display: 'flex',
         alignItems: 'center',
         gap: 10,
@@ -67,22 +66,21 @@ function Section({ title, accent = '#60a5fa', badge, error, children }) {
         )}
       </div>
       {error ? (
-        <div style={{ color: '#f87171', fontFamily: 'monospace', fontSize: 11, padding: '12px 14px' }}>
-          {error}
-        </div>
+        <div style={{ color: '#c0392b', fontFamily: 'monospace', fontSize: 11, padding: '12px 14px' }}>{error}</div>
       ) : children}
     </div>
   )
 }
 
-// ── 1. Bottleneck flights (correlated subquery) ─────────────────────────────
+function rowBg(i) { return i % 2 === 0 ? '#ffffff' : '#f8f8f4' }
+
 function BottleneckTable({ result }) {
   if (!result?.ok) return null
   const rows = result.data ?? []
   return (
     <div style={{ overflowX: 'auto' }}>
       {rows.length === 0 ? (
-        <p style={{ color: '#334155', fontFamily: 'monospace', fontSize: 11, padding: '12px 14px' }}>
+        <p style={{ color: '#c8c8c0', fontFamily: 'monospace', fontSize: 11, padding: '12px 14px' }}>
           No bottleneck flights found
         </p>
       ) : (
@@ -90,10 +88,10 @@ function BottleneckTable({ result }) {
           <thead><tr><Th>Flight</Th><Th>Airline</Th><Th right>Turnaround (sec)</Th></tr></thead>
           <tbody>
             {rows.map((r, i) => (
-              <tr key={i} style={{ background: i % 2 === 0 ? '#080f1e' : '#0a1628' }}>
-                <Td accent="#e2e8f0">{r.flight_number}</Td>
+              <tr key={i} style={{ background: rowBg(i) }}>
+                <Td accent="#1a1a1a">{r.flight_number}</Td>
                 <Td>{r.airline_name}</Td>
-                <Td right accent="#f87171">{Number(r.turnaround_sec ?? 0).toLocaleString()}</Td>
+                <Td right accent="#c0392b">{Number(r.turnaround_sec ?? 0).toLocaleString()}</Td>
               </tr>
             ))}
           </tbody>
@@ -103,14 +101,13 @@ function BottleneckTable({ result }) {
   )
 }
 
-// ── 2. Under-used large gates (nested query) ────────────────────────────────
 function UnusedGatesTable({ result }) {
   if (!result?.ok) return null
   const rows = result.data ?? []
   return (
     <div style={{ overflowX: 'auto' }}>
       {rows.length === 0 ? (
-        <p style={{ color: '#4ade80', fontFamily: 'monospace', fontSize: 11, padding: '12px 14px' }}>
+        <p style={{ color: '#27ae60', fontFamily: 'monospace', fontSize: 11, padding: '12px 14px' }}>
           All large gates are fully utilized
         </p>
       ) : (
@@ -118,9 +115,9 @@ function UnusedGatesTable({ result }) {
           <thead><tr><Th>Gate</Th><Th right>Max Size Category</Th></tr></thead>
           <tbody>
             {rows.map((r, i) => (
-              <tr key={i} style={{ background: i % 2 === 0 ? '#080f1e' : '#0a1628' }}>
-                <Td accent="#fbbf24">{r.gate_label}</Td>
-                <Td right accent="#94a3b8">{r.max_size_category}</Td>
+              <tr key={i} style={{ background: rowBg(i) }}>
+                <Td accent="#e67e22">{r.gate_label}</Td>
+                <Td right accent="#666660">{r.max_size_category}</Td>
               </tr>
             ))}
           </tbody>
@@ -130,7 +127,6 @@ function UnusedGatesTable({ result }) {
   )
 }
 
-// ── 3. Busiest gates ────────────────────────────────────────────────────────
 function BusiestGatesTable({ result }) {
   if (!result?.ok) return null
   const rows = result.data ?? []
@@ -142,12 +138,12 @@ function BusiestGatesTable({ result }) {
         <tbody>
           {rows.map((r, i) => {
             const pct = (Number(r.flight_count) / max) * 100
-            const color = pct > 75 ? '#f87171' : pct > 40 ? '#fbbf24' : '#4ade80'
+            const color = pct > 75 ? '#c0392b' : pct > 40 ? '#e67e22' : '#27ae60'
             return (
-              <tr key={i} style={{ background: i % 2 === 0 ? '#080f1e' : '#0a1628' }}>
-                <Td accent="#60a5fa">{r.gate_label}</Td>
+              <tr key={i} style={{ background: rowBg(i) }}>
+                <Td accent="#e67e22">{r.gate_label}</Td>
                 <td style={{ ...tdBase, width: '50%' }}>
-                  <div style={{ height: 5, background: '#0a1628', borderRadius: 3, overflow: 'hidden' }}>
+                  <div style={{ height: 5, background: '#f0f0eb', borderRadius: 3, overflow: 'hidden' }}>
                     <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 3 }} />
                   </div>
                 </td>
@@ -161,7 +157,6 @@ function BusiestGatesTable({ result }) {
   )
 }
 
-// ── 4. Equipment usage ──────────────────────────────────────────────────────
 function EquipmentTable({ result }) {
   if (!result?.ok) return null
   const rows = result.data ?? []
@@ -171,11 +166,11 @@ function EquipmentTable({ result }) {
         <thead><tr><Th>Equipment</Th><Th>ID</Th><Th right>Assignments</Th><Th right>Total (sec)</Th></tr></thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr key={i} style={{ background: i % 2 === 0 ? '#080f1e' : '#0a1628' }}>
-              <Td accent="#94a3b8">{r.equipment_type}</Td>
-              <Td accent="#475569">#{r.equipment_id}</Td>
-              <Td right accent="#60a5fa">{r.assignment_count}</Td>
-              <Td right accent="#4ade80">{Number(r.total_duration_sec ?? 0).toLocaleString()}</Td>
+            <tr key={i} style={{ background: rowBg(i) }}>
+              <Td accent="#666660">{r.equipment_type}</Td>
+              <Td accent="#c8c8c0">#{r.equipment_id}</Td>
+              <Td right accent="#e67e22">{r.assignment_count}</Td>
+              <Td right accent="#27ae60">{Number(r.total_duration_sec ?? 0).toLocaleString()}</Td>
             </tr>
           ))}
         </tbody>
@@ -184,7 +179,6 @@ function EquipmentTable({ result }) {
   )
 }
 
-// ── 5. Passenger flow peaks ─────────────────────────────────────────────────
 function PassengerTable({ result }) {
   if (!result?.ok) return null
   const rows = result.data ?? []
@@ -194,12 +188,12 @@ function PassengerTable({ result }) {
         <thead><tr><Th>Zone</Th><Th>Terminal</Th><Th right>Peak PAX</Th><Th right>Avg PAX</Th><Th right>Log Entries</Th></tr></thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr key={i} style={{ background: i % 2 === 0 ? '#080f1e' : '#0a1628' }}>
-              <Td accent="#c084fc">{r.zone_name}</Td>
+            <tr key={i} style={{ background: rowBg(i) }}>
+              <Td accent="#d35400">{r.zone_name}</Td>
               <Td>{r.terminal_name}</Td>
-              <Td right accent="#fbbf24">{Number(r.peak_count ?? 0).toLocaleString()}</Td>
-              <Td right accent="#94a3b8">{Math.round(r.avg_count ?? 0).toLocaleString()}</Td>
-              <Td right accent="#475569">{r.log_entries}</Td>
+              <Td right accent="#e67e22">{Number(r.peak_count ?? 0).toLocaleString()}</Td>
+              <Td right accent="#666660">{Math.round(r.avg_count ?? 0).toLocaleString()}</Td>
+              <Td right accent="#c8c8c0">{r.log_entries}</Td>
             </tr>
           ))}
         </tbody>
@@ -208,7 +202,6 @@ function PassengerTable({ result }) {
   )
 }
 
-// ── Main component ──────────────────────────────────────────────────────────
 export default function AnalyticsDashboard() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -223,84 +216,51 @@ export default function AnalyticsDashboard() {
   }, [])
 
   return (
-    <div style={{
-      height: '100%',
-      overflowY: 'auto',
-      padding: '16px',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 16,
-    }}>
+    <div style={{ height: '100%', overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <span style={{ fontSize: 16 }}>📊</span>
-        <h2 style={{ color: '#e2e8f0', fontFamily: 'monospace', fontSize: 14, letterSpacing: 2, fontWeight: 700 }}>
+        <h2 style={{ color: '#1a1a1a', fontFamily: 'monospace', fontSize: 14, letterSpacing: 2, fontWeight: 700 }}>
           ANALYTICS DASHBOARD
         </h2>
-        <span style={{
-          marginLeft: 'auto',
-          color: '#334155',
-          fontFamily: 'monospace',
-          fontSize: 10,
-          letterSpacing: 1,
-        }}>
+        <span style={{ marginLeft: 'auto', color: '#c8c8c0', fontFamily: 'monospace', fontSize: 10, letterSpacing: 1 }}>
           SECTION 13.5 QUERIES
         </span>
       </div>
 
       {error && (
-        <div style={{ color: '#f87171', fontFamily: 'monospace', fontSize: 12, textAlign: 'center' }}>
-          {error}
-        </div>
+        <div style={{ color: '#c0392b', fontFamily: 'monospace', fontSize: 12, textAlign: 'center' }}>{error}</div>
       )}
-
       {loading && (
-        <div style={{ color: '#64748b', fontFamily: 'monospace', fontSize: 12, textAlign: 'center', paddingTop: 40 }}>
+        <div style={{ color: '#666660', fontFamily: 'monospace', fontSize: 12, textAlign: 'center', paddingTop: 40 }}>
           Running queries…
         </div>
       )}
 
       {data && !loading && (
         <>
-          <Section
-            title="BOTTLENECK FLIGHTS"
-            accent="#f87171"
-            badge="CORRELATED SUBQUERY"
-            error={!data.bottleneck_flights?.ok ? data.bottleneck_flights?.error : null}
-          >
+          <Section title="BOTTLENECK FLIGHTS"    accent="#c0392b" badge="CORRELATED SUBQUERY"
+            error={!data.bottleneck_flights?.ok ? data.bottleneck_flights?.error : null}>
             <BottleneckTable result={data.bottleneck_flights} />
           </Section>
 
-          <Section
-            title="UNDER-USED LARGE GATES"
-            accent="#fbbf24"
-            badge="NESTED QUERY"
-            error={!data.unused_large_gates?.ok ? data.unused_large_gates?.error : null}
-          >
+          <Section title="UNDER-USED LARGE GATES" accent="#e67e22" badge="NESTED QUERY"
+            error={!data.unused_large_gates?.ok ? data.unused_large_gates?.error : null}>
             <UnusedGatesTable result={data.unused_large_gates} />
           </Section>
 
-          <Section
-            title="BUSIEST GATES"
-            accent="#60a5fa"
-            error={!data.busiest_gates?.ok ? data.busiest_gates?.error : null}
-          >
+          <Section title="BUSIEST GATES" accent="#e67e22"
+            error={!data.busiest_gates?.ok ? data.busiest_gates?.error : null}>
             <BusiestGatesTable result={data.busiest_gates} />
           </Section>
 
-          <Section
-            title="EQUIPMENT USAGE"
-            accent="#4ade80"
-            error={!data.equipment_usage?.ok ? data.equipment_usage?.error : null}
-          >
+          <Section title="EQUIPMENT USAGE" accent="#27ae60"
+            error={!data.equipment_usage?.ok ? data.equipment_usage?.error : null}>
             <EquipmentTable result={data.equipment_usage} />
           </Section>
 
-          <Section
-            title="PASSENGER FLOW PEAKS"
-            accent="#c084fc"
-            error={!data.passenger_peaks?.ok ? data.passenger_peaks?.error : null}
-          >
+          <Section title="PASSENGER FLOW PEAKS" accent="#d35400"
+            error={!data.passenger_peaks?.ok ? data.passenger_peaks?.error : null}>
             <PassengerTable result={data.passenger_peaks} />
           </Section>
         </>

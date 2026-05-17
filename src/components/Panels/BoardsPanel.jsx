@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react'
 
 const STATUS_COLORS = {
-  Inbound:   '#60a5fa',
-  Taxiing:   '#4ade80',
-  At_Gate:   '#fbbf24',
-  Boarding:  '#c084fc',
-  Pushback:  '#f87171',
-  Departed:  '#a78bfa',
-  Delayed:   '#f87171',
-  default:   '#94a3b8',
+  Inbound:   '#27ae60',
+  Taxiing:   '#27ae60',
+  At_Gate:   '#e67e22',
+  Boarding:  '#e67e22',
+  Pushback:  '#c0392b',
+  Departed:  '#666660',
+  Delayed:   '#c0392b',
+  default:   '#666660',
 }
 
 function statusColor(s) { return STATUS_COLORS[s] ?? STATUS_COLORS.default }
@@ -20,22 +20,21 @@ function fmtSecs(secs) {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
 }
 
-// ── FIDS row ────────────────────────────────────────────────────────────────
 function BoardRow({ flight, type, even }) {
   const sc = statusColor(flight.status)
   const isDelayed = flight.status === 'Delayed'
   return (
     <tr style={{
-      background: even ? '#060e1a' : '#080f1e',
-      borderBottom: '1px solid #0d1628',
+      background: even ? '#ffffff' : '#f8f8f4',
+      borderBottom: '1px solid #f0f0eb',
     }}>
-      <td style={{ ...td, fontFamily: 'monospace', fontWeight: 700, color: '#e2e8f0', letterSpacing: 1 }}>
+      <td style={{ ...td, fontFamily: 'monospace', fontWeight: 700, color: '#1a1a1a', letterSpacing: 1 }}>
         {flight.flight_number}
       </td>
-      <td style={{ ...td, color: '#94a3b8' }}>
+      <td style={{ ...td, color: '#666660' }}>
         {type === 'arrivals' ? (flight.origin_airport ?? '—') : (flight.destination_airport ?? '—')}
       </td>
-      <td style={{ ...td, fontFamily: 'monospace', color: '#60a5fa' }}>
+      <td style={{ ...td, fontFamily: 'monospace', color: '#e67e22' }}>
         {fmtSecs(type === 'arrivals' ? flight.sim_arrival_sec : flight.sim_departure_sec)}
       </td>
       <td style={td}>
@@ -54,7 +53,7 @@ function BoardRow({ flight, type, even }) {
           {flight.status?.replace('_', ' ').toUpperCase() ?? '—'}
         </span>
       </td>
-      <td style={{ ...td, fontFamily: 'monospace', color: '#64748b', textAlign: 'right' }}>
+      <td style={{ ...td, fontFamily: 'monospace', color: '#666660', textAlign: 'right' }}>
         {flight.gate_label ?? flight.bay_label ?? '—'}
       </td>
     </tr>
@@ -66,17 +65,16 @@ const td = { padding: '9px 12px', fontSize: 13, verticalAlign: 'middle' }
 const thStyle = {
   padding: '9px 12px',
   textAlign: 'left',
-  color: '#475569',
+  color: '#666660',
   fontFamily: 'monospace',
   fontSize: 10,
   fontWeight: 700,
   letterSpacing: 1.5,
-  borderBottom: '2px solid #1e3a5f',
-  background: '#0a1628',
+  borderBottom: '2px solid #c8c8c0',
+  background: '#f0f0eb',
   whiteSpace: 'nowrap',
 }
 
-// ── Board table ─────────────────────────────────────────────────────────────
 function Board({ rows, type }) {
   const sorted = [...rows].sort((a, b) => {
     const ta = type === 'arrivals' ? (a.sim_arrival_sec ?? 0) : (a.sim_departure_sec ?? 0)
@@ -91,7 +89,7 @@ function Board({ rows, type }) {
   return (
     <div style={{ overflowX: 'auto' }}>
       {sorted.length === 0 ? (
-        <div style={{ color: '#334155', fontFamily: 'monospace', fontSize: 12, textAlign: 'center', padding: '32px' }}>
+        <div style={{ color: '#c8c8c0', fontFamily: 'monospace', fontSize: 12, textAlign: 'center', padding: '32px' }}>
           No {type} scheduled
         </div>
       ) : (
@@ -116,7 +114,6 @@ function Board({ rows, type }) {
   )
 }
 
-// ── Main component ──────────────────────────────────────────────────────────
 export default function BoardsPanel() {
   const [tab, setTab] = useState('arrivals')
   const [data, setData] = useState(null)
@@ -140,41 +137,35 @@ export default function BoardsPanel() {
   const departures = data?.departures ?? []
 
   return (
-    <div style={{
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      overflow: 'hidden',
-      background: '#060e1a',
-    }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#f5f5f0' }}>
       {/* Header */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
         gap: 12,
         padding: '14px 16px',
-        borderBottom: '1px solid #1e3a5f',
-        background: '#0a1628',
+        borderBottom: '1px solid #c8c8c0',
+        background: '#f0f0eb',
         flexShrink: 0,
       }}>
         <span style={{ fontSize: 16 }}>📋</span>
-        <h2 style={{ color: '#e2e8f0', fontFamily: 'monospace', fontSize: 14, letterSpacing: 2, fontWeight: 700 }}>
+        <h2 style={{ color: '#1a1a1a', fontFamily: 'monospace', fontSize: 14, letterSpacing: 2, fontWeight: 700 }}>
           FLIGHT INFORMATION DISPLAY
         </h2>
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
           {lastRefresh && (
-            <span style={{ color: '#334155', fontFamily: 'monospace', fontSize: 10 }}>
+            <span style={{ color: '#c8c8c0', fontFamily: 'monospace', fontSize: 10 }}>
               {lastRefresh.toLocaleTimeString()}
             </span>
           )}
           <span style={{
-            background: '#1c3a1c',
-            color: '#4ade80',
+            background: 'rgba(39,174,96,0.12)',
+            color: '#27ae60',
             fontSize: 10,
             fontFamily: 'monospace',
             padding: '2px 8px',
             borderRadius: 10,
-            border: '1px solid #4ade8044',
+            border: '1px solid rgba(39,174,96,0.3)',
             letterSpacing: 0.5,
           }}>
             AUTO · 5s
@@ -183,15 +174,10 @@ export default function BoardsPanel() {
       </div>
 
       {/* Tabs */}
-      <div style={{
-        display: 'flex',
-        borderBottom: '1px solid #1e3a5f',
-        background: '#0a1628',
-        flexShrink: 0,
-      }}>
+      <div style={{ display: 'flex', borderBottom: '1px solid #c8c8c0', background: '#f0f0eb', flexShrink: 0 }}>
         {[
-          { id: 'arrivals',   label: `ARRIVALS   (${arrivals.length})`,   accent: '#60a5fa' },
-          { id: 'departures', label: `DEPARTURES (${departures.length})`, accent: '#4ade80' },
+          { id: 'arrivals',   label: `ARRIVALS   (${arrivals.length})`,   accent: '#e67e22' },
+          { id: 'departures', label: `DEPARTURES (${departures.length})`, accent: '#27ae60' },
         ].map(t => (
           <button
             key={t.id}
@@ -200,7 +186,7 @@ export default function BoardsPanel() {
               background: 'none',
               border: 'none',
               borderBottom: tab === t.id ? `2px solid ${t.accent}` : '2px solid transparent',
-              color: tab === t.id ? t.accent : '#475569',
+              color: tab === t.id ? t.accent : '#666660',
               fontFamily: 'monospace',
               fontSize: 11,
               letterSpacing: 1.5,
@@ -215,12 +201,11 @@ export default function BoardsPanel() {
       </div>
 
       {error && (
-        <div style={{ color: '#f87171', fontFamily: 'monospace', fontSize: 12, textAlign: 'center', padding: '12px' }}>
+        <div style={{ color: '#c0392b', fontFamily: 'monospace', fontSize: 12, textAlign: 'center', padding: '12px' }}>
           {error}
         </div>
       )}
 
-      {/* Board content */}
       <div style={{ flex: 1, overflowY: 'auto' }}>
         {tab === 'arrivals'
           ? <Board rows={arrivals} type="arrivals" />

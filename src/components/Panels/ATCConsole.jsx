@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
 
 const STATUS_COLORS = {
-  Inbound:   { bg: '#1e3a5f', text: '#60a5fa' },
-  Taxiing:   { bg: '#1c2e1c', text: '#4ade80' },
-  At_Gate:   { bg: '#2a2a1c', text: '#fbbf24' },
-  Boarding:  { bg: '#2a1c2a', text: '#c084fc' },
-  Pushback:  { bg: '#2a1c1c', text: '#f87171' },
-  Departed:  { bg: '#1a1a2a', text: '#a78bfa' },
-  default:   { bg: '#1e2535', text: '#94a3b8' },
+  Inbound:   { bg: 'rgba(39,174,96,0.12)',  text: '#27ae60' },
+  Taxiing:   { bg: 'rgba(39,174,96,0.12)',  text: '#27ae60' },
+  At_Gate:   { bg: 'rgba(230,126,34,0.12)', text: '#e67e22' },
+  Boarding:  { bg: 'rgba(230,126,34,0.12)', text: '#e67e22' },
+  Pushback:  { bg: 'rgba(192,57,43,0.12)',  text: '#c0392b' },
+  Departed:  { bg: 'rgba(102,102,96,0.12)', text: '#666660' },
+  default:   { bg: 'rgba(102,102,96,0.12)', text: '#666660' },
 }
 
 function statusStyle(status) {
@@ -21,7 +21,6 @@ function fmtSecs(secs) {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
 }
 
-// ── Single flight row ───────────────────────────────────────────────────────
 function FlightRow({ flight }) {
   const sc = statusStyle(flight.status)
   return (
@@ -31,28 +30,22 @@ function FlightRow({ flight }) {
       gap: '4px 8px',
       alignItems: 'center',
       padding: '8px 10px',
-      borderBottom: '1px solid #0d1e38',
-      background: '#0a1628',
+      borderBottom: '1px solid #f0f0eb',
+      background: '#ffffff',
     }}>
-      <span style={{
-        fontFamily: 'monospace',
-        fontWeight: 700,
-        fontSize: 13,
-        color: '#e2e8f0',
-        letterSpacing: 1,
-      }}>
+      <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 13, color: '#1a1a1a', letterSpacing: 1 }}>
         {flight.flight_number}
       </span>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-        <span style={{ color: '#64748b', fontSize: 10, fontFamily: 'monospace' }}>
+        <span style={{ color: '#666660', fontSize: 10, fontFamily: 'monospace' }}>
           {flight.airline_iata ?? flight.airline_name ?? ''}
         </span>
-        <span style={{ color: '#94a3b8', fontSize: 11 }}>
+        <span style={{ color: '#666660', fontSize: 11 }}>
           {flight.aircraft_model ?? flight.aircraft_type ?? '—'}
         </span>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3 }}>
-        <span style={{ color: '#64748b', fontSize: 10, fontFamily: 'monospace' }}>
+        <span style={{ color: '#666660', fontSize: 10, fontFamily: 'monospace' }}>
           {fmtSecs(flight.sim_arrival_sec ?? flight.sim_departure_sec)}
         </span>
         <span style={{
@@ -63,7 +56,7 @@ function FlightRow({ flight }) {
           padding: '1px 6px',
           borderRadius: 10,
           letterSpacing: 0.5,
-          border: `1px solid ${sc.text}33`,
+          border: `1px solid ${sc.text}44`,
           whiteSpace: 'nowrap',
         }}>
           {flight.status?.replace('_', ' ').toUpperCase()}
@@ -73,25 +66,24 @@ function FlightRow({ flight }) {
   )
 }
 
-// ── Queue column ────────────────────────────────────────────────────────────
 function QueueColumn({ title, accent, flights, emptyMsg }) {
   return (
     <div style={{
       display: 'flex',
       flexDirection: 'column',
-      background: '#0d1e38',
-      border: '1px solid #1e3a5f',
+      background: '#ffffff',
+      border: '1px solid #c8c8c0',
       borderRadius: 6,
       overflow: 'hidden',
       minHeight: 0,
     }}>
       <div style={{
         padding: '10px 12px',
-        borderBottom: '1px solid #1e3a5f',
+        borderBottom: '1px solid #c8c8c0',
         display: 'flex',
         alignItems: 'center',
         gap: 8,
-        background: '#0a1628',
+        background: '#f0f0eb',
         flexShrink: 0,
       }}>
         <span style={{ color: accent, fontSize: 10, fontFamily: 'monospace', letterSpacing: 1.5, fontWeight: 700 }}>
@@ -112,7 +104,7 @@ function QueueColumn({ title, accent, flights, emptyMsg }) {
       </div>
       <div style={{ flex: 1, overflowY: 'auto' }}>
         {flights.length === 0 ? (
-          <div style={{ color: '#334155', fontFamily: 'monospace', fontSize: 11, textAlign: 'center', padding: '20px 12px' }}>
+          <div style={{ color: '#c8c8c0', fontFamily: 'monospace', fontSize: 11, textAlign: 'center', padding: '20px 12px' }}>
             {emptyMsg}
           </div>
         ) : (
@@ -123,7 +115,6 @@ function QueueColumn({ title, accent, flights, emptyMsg }) {
   )
 }
 
-// ── Event log row ───────────────────────────────────────────────────────────
 function EventRow({ event }) {
   const oldSc = statusStyle(event.old_status)
   const newSc = statusStyle(event.new_status)
@@ -134,30 +125,29 @@ function EventRow({ event }) {
       gap: '0 10px',
       alignItems: 'center',
       padding: '6px 14px',
-      borderBottom: '1px solid #0d1e38',
+      borderBottom: '1px solid #f0f0eb',
       fontSize: 11,
     }}>
-      <span style={{ fontFamily: 'monospace', color: '#60a5fa', fontWeight: 600, fontSize: 12 }}>
+      <span style={{ fontFamily: 'monospace', color: '#e67e22', fontWeight: 600, fontSize: 12 }}>
         {event.flight_number ?? '—'}
       </span>
       <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
         <span style={{ background: oldSc.bg, color: oldSc.text, padding: '1px 5px', borderRadius: 4, fontSize: 9, fontFamily: 'monospace' }}>
           {event.old_status?.replace('_', ' ') ?? '—'}
         </span>
-        <span style={{ color: '#334155', fontSize: 12 }}>→</span>
+        <span style={{ color: '#c8c8c0', fontSize: 12 }}>→</span>
         <span style={{ background: newSc.bg, color: newSc.text, padding: '1px 5px', borderRadius: 4, fontSize: 9, fontFamily: 'monospace' }}>
           {event.new_status?.replace('_', ' ') ?? '—'}
         </span>
       </div>
-      <span /> {/* spacer */}
-      <span style={{ color: '#475569', fontFamily: 'monospace', fontSize: 10, whiteSpace: 'nowrap' }}>
+      <span />
+      <span style={{ color: '#666660', fontFamily: 'monospace', fontSize: 10, whiteSpace: 'nowrap' }}>
         {fmtSecs(event.sim_logged_sec)}
       </span>
     </div>
   )
 }
 
-// ── Main component ──────────────────────────────────────────────────────────
 export default function ATCConsole() {
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
@@ -175,7 +165,6 @@ export default function ATCConsole() {
     return () => clearInterval(id)
   }, [])
 
-  // API returns flights grouped by status as an object; flatten per queue
   const grouped  = data?.flights ?? {}
   const events   = data?.recent_events ?? []
 
@@ -186,81 +175,36 @@ export default function ATCConsole() {
     .sort((a, b) => (a.sim_departure_sec ?? 0) - (b.sim_departure_sec ?? 0))
 
   return (
-    <div style={{
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      padding: '16px',
-      gap: 16,
-      overflow: 'hidden',
-    }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '16px', gap: 16, overflow: 'hidden' }}>
       {/* Header */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        flexShrink: 0,
-      }}>
-        <span style={{ color: '#60a5fa', fontFamily: 'monospace', fontSize: 11, letterSpacing: 3 }}>
-          ◈
-        </span>
-        <h2 style={{ color: '#e2e8f0', fontFamily: 'monospace', fontSize: 14, letterSpacing: 2, fontWeight: 700 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+        <span style={{ color: '#e67e22', fontFamily: 'monospace', fontSize: 11, letterSpacing: 3 }}>◈</span>
+        <h2 style={{ color: '#1a1a1a', fontFamily: 'monospace', fontSize: 14, letterSpacing: 2, fontWeight: 700 }}>
           ATC TOWER CONSOLE
         </h2>
-        <div style={{
-          marginLeft: 'auto',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-        }}>
-          <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#4ade80', display: 'inline-block' }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#27ae60', display: 'inline-block' }}>
             <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}`}</style>
           </span>
-          <span style={{ color: '#4ade80', fontFamily: 'monospace', fontSize: 10, letterSpacing: 1 }}>
-            LIVE · 3s
-          </span>
+          <span style={{ color: '#27ae60', fontFamily: 'monospace', fontSize: 10, letterSpacing: 1 }}>LIVE · 3s</span>
         </div>
       </div>
 
       {error && (
-        <div style={{ color: '#f87171', fontFamily: 'monospace', fontSize: 12, textAlign: 'center' }}>
-          {error}
-        </div>
+        <div style={{ color: '#c0392b', fontFamily: 'monospace', fontSize: 12, textAlign: 'center' }}>{error}</div>
       )}
 
       {/* Three queue columns */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr 1fr',
-        gap: 12,
-        flex: 1,
-        minHeight: 0,
-        overflow: 'hidden',
-      }}>
-        <QueueColumn
-          title="INBOUND QUEUE"
-          accent="#60a5fa"
-          flights={inbound}
-          emptyMsg="No inbound traffic"
-        />
-        <QueueColumn
-          title="ON GROUND"
-          accent="#fbbf24"
-          flights={onGround}
-          emptyMsg="No aircraft on ground"
-        />
-        <QueueColumn
-          title="DEPARTURE QUEUE"
-          accent="#f87171"
-          flights={departure}
-          emptyMsg="No departures pending"
-        />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, flex: 1, minHeight: 0, overflow: 'hidden' }}>
+        <QueueColumn title="INBOUND QUEUE"   accent="#27ae60" flights={inbound}   emptyMsg="No inbound traffic" />
+        <QueueColumn title="ON GROUND"        accent="#e67e22" flights={onGround}  emptyMsg="No aircraft on ground" />
+        <QueueColumn title="DEPARTURE QUEUE"  accent="#c0392b" flights={departure} emptyMsg="No departures pending" />
       </div>
 
       {/* Event Log */}
       <div style={{
-        background: '#0d1e38',
-        border: '1px solid #1e3a5f',
+        background: '#ffffff',
+        border: '1px solid #c8c8c0',
         borderRadius: 6,
         overflow: 'hidden',
         flexShrink: 0,
@@ -270,9 +214,9 @@ export default function ATCConsole() {
       }}>
         <div style={{
           padding: '8px 14px',
-          borderBottom: '1px solid #1e3a5f',
-          background: '#0a1628',
-          color: '#64748b',
+          borderBottom: '1px solid #c8c8c0',
+          background: '#f0f0eb',
+          color: '#666660',
           fontFamily: 'monospace',
           fontSize: 10,
           letterSpacing: 1.5,
@@ -282,7 +226,7 @@ export default function ATCConsole() {
         </div>
         <div style={{ overflowY: 'auto', flex: 1 }}>
           {events.length === 0 ? (
-            <div style={{ color: '#334155', fontFamily: 'monospace', fontSize: 11, textAlign: 'center', padding: '14px' }}>
+            <div style={{ color: '#c8c8c0', fontFamily: 'monospace', fontSize: 11, textAlign: 'center', padding: '14px' }}>
               No recent events
             </div>
           ) : (
