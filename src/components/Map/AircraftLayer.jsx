@@ -3,33 +3,22 @@ import { getAircraftPosition, getFlightStatus } from '../../utils/interpolation'
 import AircraftIcon from './AircraftIcon'
 
 export default function AircraftLayer({ flights, simRef, onSelectFlight }) {
-  // flightId → { ref: { current: null }, flight }
-  // Plain object refs work — React sets ref.current = domNode on mount.
-  const iconRefsRef = useRef({})
+  const elMapRef = useRef(new Map())     // flightId → DOM <g> element
+  const flightMapRef = useRef(new Map()) // flightId → flight data
 
-  // Keep flight data current without remounting icons
   useEffect(() => {
-    const prev = iconRefsRef.current
-    const next = {}
-    flights.forEach(f => {
-      const id = f.flight_id ?? f.id
-      next[id] = prev[id]
-        ? { ref: prev[id].ref, flight: f }
-        : { ref: { current: null }, flight: f }
-    })
-    iconRefsRef.current = next
+    const m = new Map()
+    flights.forEach(f => m.set(f.flight_id ?? f.id, f))
+    flightMapRef.current = m
   }, [flights])
 
-  // RAF loop: 60fps position writes — never triggers a React re-render
   useEffect(() => {
     let rafId
     function frame() {
       const sec = simRef.current
-      const entries = iconRefsRef.current
-      for (const id in entries) {
-        const { ref, flight } = entries[id]
-        const el = ref.current
-        if (!el) continue
+      elMapRef.current.forEach((el, id) => {
+        const flight = flightMapRef.current.get(id)
+        if (!flight) return
         const pos = getAircraftPosition(flight, sec)
         if (!pos) {
           el.setAttribute('display', 'none')
@@ -37,7 +26,7 @@ export default function AircraftLayer({ flights, simRef, onSelectFlight }) {
           el.removeAttribute('display')
           el.setAttribute('transform', `translate(${pos.x},${pos.y}) rotate(${pos.heading})`)
         }
-      }
+      })
       rafId = requestAnimationFrame(frame)
     }
     rafId = requestAnimationFrame(frame)
@@ -48,17 +37,15 @@ export default function AircraftLayer({ flights, simRef, onSelectFlight }) {
     <>
       {flights.map(f => {
         const id = f.flight_id ?? f.id
-        // Lazy-create entry on first render before the effect has synced
-        if (!iconRefsRef.current[id]) {
-          iconRefsRef.current[id] = { ref: { current: null }, flight: f }
-        }
-        const entry = iconRefsRef.current[id]
-        const status = getFlightStatus(f, simRef.current)
+        const status = getFlightStatus(f, 0)
         const label = f.flight_number ?? f.callsign ?? ''
         return (
           <AircraftIcon
             key={id}
-            ref={entry.ref}
+            ref={el => {
+              if (el) elMapRef.current.set(id, el)
+              else elMapRef.current.delete(id)
+            }}
             status={status}
             callsign={label}
             onClick={() => onSelectFlight?.(id)}
