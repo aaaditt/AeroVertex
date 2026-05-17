@@ -1,14 +1,12 @@
 import { forwardRef } from 'react'
 
 const STATUS_COLORS = {
-  Delayed:   '#f59e0b',
-  Cancelled: '#ef4444',
+  Delayed:   '#d35400',
+  Cancelled: '#c0392b',
 }
 
-// Ref is placed on the root <g> so the RAF loop can write transform via setAttribute.
-// x/y/heading are NOT props — they are written directly to the DOM each frame.
 const AircraftIcon = forwardRef(function AircraftIcon({ status, callsign, onClick }, ref) {
-  const color = STATUS_COLORS[status] ?? '#3b82f6'
+  const color = STATUS_COLORS[status] ?? '#e67e22'
   return (
     <g ref={ref} style={{ cursor: onClick ? 'pointer' : 'default' }} onClick={onClick}>
       <ellipse cx={0} cy={0} rx={5} ry={12} fill={color} opacity={0.95} />
