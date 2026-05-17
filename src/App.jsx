@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Shell from './components/Layout/Shell'
 import AirportMap from './components/Map/AirportMap'
+import FlightDetail from './components/Panels/FlightDetail'
 import { useSimulation } from './hooks/useSimulation'
 import './App.css'
 
@@ -49,15 +50,21 @@ export default function App() {
   }
 
   return (
-    <Shell
-      activeModule={activeModule}
-      onNavigate={setActiveModule}
-      currentSimSecond={simSecond}
-      flightCount={flights.length}
-      simSpeed={speed}
-      onSetSpeed={setSpeed}
-    >
-      {renderModule()}
-    </Shell>
+    <>
+      <Shell
+        activeModule={activeModule}
+        onNavigate={setActiveModule}
+        currentSimSecond={simSecond}
+        flightCount={flights.length}
+        simSpeed={speed}
+        onSetSpeed={setSpeed}
+      >
+        {renderModule()}
+      </Shell>
+      <FlightDetail
+        flightId={selectedItem?.type === 'flight' ? selectedItem.id : null}
+        onClose={() => setSelectedItem(null)}
+      />
+    </>
   )
 }
