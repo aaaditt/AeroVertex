@@ -14,7 +14,7 @@ export default function App() {
   const [activeModule, setActiveModule] = useState('map')
   const [selectedItem, setSelectedItem] = useState(null)
 
-  const { simSecond, speed, setSpeed, flights } = useSimulation()
+  const { simSecond, speed, setSpeed, flights, simRef } = useSimulation()
 
   // Keyboard shortcuts: Space=pause/resume, 1=3×, 2=6×, 3=12×
   useEffect(() => {
@@ -35,7 +35,7 @@ export default function App() {
         return (
           <AirportMap
             flights={flights}
-            simSecond={simSecond}
+            simRef={simRef}
             onSelectFlight={id => setSelectedItem({ type: 'flight', id })}
             onSelectGate={id => setSelectedItem({ type: 'gate', id })}
             onSelectCargo={() => setActiveModule('cargo')}

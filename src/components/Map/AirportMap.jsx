@@ -49,7 +49,7 @@ function curvedExit(rx, ry, tx, ty) {
 // ── Main component ─────────────────────────────────────────────────────────
 export default function AirportMap({
   flights = [],
-  simSecond = 0,
+  simRef,
   onSelectFlight,
   onSelectGate,
   onSelectCargo,
@@ -381,7 +381,7 @@ export default function AirportMap({
         {/* ─── LAYER 15: Aircraft (topmost) ─────────────────────────────── */}
         <AircraftLayer
           flights={flights}
-          simSecond={simSecond}
+          simRef={simRef}
           onSelectFlight={onSelectFlight}
         />
       </svg>
