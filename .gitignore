@@ -27,3 +27,9 @@ dist-ssr
 
 # Word/Excel lock files
 ~$*
+
+# Local-only files (kept on disk, never committed)
+.claude/
+docs/
+*.blueprint.md
+AeroVertex_Project_Blueprint*.md
