@@ -33,3 +33,6 @@ dist-ssr
 docs/
 *.blueprint.md
 AeroVertex_Project_Blueprint*.md
+
+# Cygwin/bash stack dumps
+*.stackdump
