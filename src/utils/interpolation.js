@@ -1,16 +1,22 @@
 // ── Speed weights per segment ───────────────────────────────────────
 // Higher = covers that segment faster. Ratio between max and min
-// determines the visual speed contrast.
+// determines the visual speed contrast across the path.
 //
-// Arrival (7 pts → 6 segs):
-//   [0] descent approach   [1] final approach   [2] runway roll
-//   [3] spine taxi          [4] horiz taxi       [5] gate creep
-const ARRIVAL_W  = [28, 16, 9, 2.2, 1.6, 0.3]
+// Arrival (10 pts → 9 segs) — east-to-west landing, then loop back east
+// around the concourse via the east spine:
+//   [0] high-altitude descent       [1] final approach flare to touchdown
+//   [2] high-speed roll (touch→mid) [3] braking roll (mid→far exit)
+//   [4] exit south onto TWY A        [5] taxi east along TWY A
+//   [6] south down east spine       [7] west along mid-pax / cargo twy
+//   [8] gate creep
+const ARRIVAL_W  = [42, 22, 18, 9, 4, 3, 2.5, 1.8, 0.4]
 
-// Departure (7 pts → 6 segs):
-//   [0] pushback   [1] turn onto taxi   [2] horiz taxi
-//   [3] spine taxi [4] runway accel     [5] liftoff climb
-const DEPART_W = [0.25, 0.5, 1.4, 2.0, 11, 28]
+// Departure (9 pts → 8 segs) — full-runway takeoff using rwy 09R/27L:
+//   [0] pushback (slow)             [1] turn onto mid-pax taxiway
+//   [2] taxi west to spine          [3] spine taxi south to threshold
+//   [4] hold-short at threshold     [5] takeoff roll (full runway)
+//   [6] rotation + initial climb    [7] climb-out off-screen east
+const DEPART_W = [0.25, 0.55, 1.6, 2.2, 0.15, 14, 22, 36]
 
 // ── Position computation ────────────────────────────────────────────
 
@@ -50,30 +56,55 @@ export function getAircraftPosition(flight, simSecond) {
 
 // ── Path builders ───────────────────────────────────────────────────
 
+// ── Arrival: east-to-west landing, loop back east around concourse ──
+// Geometry reference (from AirportMap.jsx):
+//   RWY1 (09L/27R, arrivals) at y=82, runway extents x=50..950
+//   Arrival taxiway (TWY A) at y=130, runs full width
+//   Terminal Concourse A occupies x≈60..660, y≈162..238 (gates A1..A5 hang south)
+//   East spine x=800 — clears the concourse east end, west spine x=200 cuts through it
+//   Mid-pax taxiway at y=358, cargo taxiway at y=430
+//
+// Physics narrative: plane descends from off-screen east, flares over
+// the FAR threshold (x=900), touches down, decelerates across ~78% of
+// the runway, exits south at the WEST end. To avoid threading through
+// the concourse footprint, it then taxis east along TWY A back to the
+// EAST spine, descends to the mid-pax taxiway, and approaches the gate
+// from the east side. Resulting path looks like a backward "C" around
+// the terminal.
 function buildArrivalPath(gx, gy, isCargo) {
-  const midY = isCargo ? 420 : 350
+  const midY = isCargo ? 430 : 358
   return [
-    { x: 1250, y: 55 },   // high altitude, far off-screen
-    { x: 1060, y: 125 },  // on final, descending to runway
-    { x: 950,  y: 140 },  // touchdown
-    { x: 800,  y: 140 },  // end of roll → exit onto spine
-    { x: 800,  y: midY }, // south along east spine
-    { x: gx,   y: midY }, // west along horizontal taxiway
-    { x: gx,   y: gy },   // creep north into gate stand
+    { x: 1250, y: 30 },   // 0: high-altitude descent, far off-screen east
+    { x: 1020, y: 60 },   // 1: descending through MVA, on final approach
+    { x: 900,  y: 82 },   // 2: touchdown — near east threshold of RWY 1
+    { x: 500,  y: 82 },   // 3: high-speed roll across middle of runway
+    { x: 200,  y: 82 },   // 4: braked, near west threshold — about to exit
+    { x: 200,  y: 130 },  // 5: rapid-exit south onto TWY A
+    { x: 800,  y: 130 },  // 6: taxi east along TWY A back to east spine
+    { x: 800,  y: midY }, // 7: south down east spine to mid-pax twy
+    { x: gx,   y: midY }, // 8: west along mid-pax / cargo twy to gate column
+    { x: gx,   y: gy },   // 9: creep north into gate stand
   ]
 }
 
+// ── Departure: full-runway takeoff to the east ──────────────────────
+// Physics narrative: pushback from gate, taxi west to west spine, south
+// to runway 2 (y=572) at the WEST threshold (x≈100), hold short briefly,
+// then accelerate eastward across the FULL runway, rotate near x=850,
+// climb out off-screen east.
 function buildDeparturePath(gx, gy, isCargo) {
-  const midY = isCargo ? 420 : 350
+  const midY = isCargo ? 430 : 358
   const pushY = Math.min(gy + 28, midY - 8)
   return [
-    { x: gx,      y: gy },     // at gate
-    { x: gx,      y: pushY },  // tug pushback (south)
-    { x: gx - 18, y: midY },   // pivot onto taxiway
-    { x: 200,     y: midY },   // west along horizontal
-    { x: 200,     y: 560 },    // south down west spine to rwy 2
-    { x: 50,      y: 560 },    // runway roll (accelerating)
-    { x: -150,    y: 500 },    // climb-out, off-screen
+    { x: gx,      y: gy },     // 0: at gate
+    { x: gx,      y: pushY },  // 1: tug pushback (south)
+    { x: gx - 18, y: midY },   // 2: pivot onto mid-pax/cargo taxiway
+    { x: 200,     y: midY },   // 3: taxi west along mid-pax
+    { x: 200,     y: 572 },    // 4: south down west spine to rwy 2 threshold
+    { x: 100,     y: 572 },    // 5: align with runway threshold (west end)
+    { x: 130,     y: 572 },    // 6: hold-short pause (low weight on this short seg)
+    { x: 850,     y: 572 },    // 7: takeoff roll — accelerates across full runway
+    { x: 1100,    y: 500 },    // 8: rotation + climb-out, off-screen east
   ]
 }
 
