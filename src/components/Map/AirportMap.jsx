@@ -393,37 +393,6 @@ export default function AirportMap({
           </text>
         </g>
 
-        {/* ── 14. NORTH COMPASS ──────────────────────────────── */}
-        <g style={{ pointerEvents: 'none' }}>
-          <circle cx={42} cy={42} r={24}
-            fill={PAL.paper} stroke={PAL.stroke} strokeWidth={1.4} opacity={0.92} />
-          <circle cx={42} cy={42} r={18}
-            fill="none" stroke={PAL.strokeLt} strokeWidth={0.6} opacity={0.7} />
-          {/* N-arrow: solid north half, outlined south half */}
-          <path d="M 42,24 L 38,46 L 42,42 L 46,46 Z"
-            fill={PAL.stroke} opacity={0.85} />
-          <path d="M 42,60 L 38,46 L 42,50 L 46,46 Z"
-            fill="none" stroke={PAL.stroke} strokeWidth={1} opacity={0.5} />
-          <text x={42} y={22} textAnchor="middle" fill={PAL.stroke}
-            fontSize={9} fontFamily="'JetBrains Mono', monospace" fontWeight={800}>N</text>
-        </g>
-
-        {/* ── 15. AX BADGE ───────────────────────────────────── */}
-        <g style={{ pointerEvents: 'none' }}>
-          <circle cx={944} cy={222} r={40}
-            fill={PAL.paper} stroke={PAL.stroke} strokeWidth={1.8} />
-          <circle cx={944} cy={222} r={34}
-            fill="none" stroke={PAL.stroke} strokeWidth={0.7} />
-          <text x={944} y={218} textAnchor="middle"
-            fill={PAL.text} fontSize={20} fontFamily="'JetBrains Mono', monospace"
-            fontWeight={800} letterSpacing={2}>AX</text>
-          <text x={944} y={234} textAnchor="middle"
-            fill={PAL.textMd} fontSize={5.5}
-            fontFamily="'JetBrains Mono', monospace" letterSpacing={2.5}>
-            AIRPORT OPERATIONS
-          </text>
-        </g>
-
         {/* ── 16. PERIMETER ──────────────────────────────────── */}
         <rect x={5} y={5} width={990} height={690}
           fill="none" stroke="#c4c0bc" strokeWidth={0.7}
