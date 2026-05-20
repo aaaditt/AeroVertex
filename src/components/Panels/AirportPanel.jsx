@@ -68,22 +68,6 @@ function TerminalCard({ terminal, flights }) {
   )
 }
 
-function RunwayBar({ label, utilization }) {
-  const pct = Number(utilization ?? 0)
-  const color = pct > 75 ? '#c0392b' : pct > 50 ? '#e67e22' : '#27ae60'
-  return (
-    <div style={{ marginBottom: 14 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-        <span style={{ color: '#666660', fontFamily: 'monospace', fontSize: 11, letterSpacing: 1 }}>{label}</span>
-        <span style={{ color, fontFamily: 'monospace', fontSize: 11, fontWeight: 700 }}>{pct.toFixed(1)}%</span>
-      </div>
-      <div style={{ width: '100%', height: 6, background: '#f0f0eb', borderRadius: 3, overflow: 'hidden', border: '1px solid #c8c8c0' }}>
-        <div style={{ width: `${Math.min(pct, 100)}%`, height: '100%', background: color, borderRadius: 3, transition: 'width 0.6s ease' }} />
-      </div>
-    </div>
-  )
-}
-
 export default function AirportPanel({ simSecond = 0 }) {
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
@@ -97,8 +81,6 @@ export default function AirportPanel({ simSecond = 0 }) {
   }, [bucketSec])
 
   const terminals    = data?.terminals ?? []
-  const runways      = data?.runways ?? []
-  const util         = data?.runway_utilization ?? {}
   const freeGates    = data?.free_gates
   const flightCounts = data?.flight_counts ?? []
 
@@ -139,27 +121,6 @@ export default function AirportPanel({ simSecond = 0 }) {
             <div style={{ color: '#c8c8c0', fontFamily: 'monospace', fontSize: 11 }}>No terminal data</div>
           )}
         </div>
-      </div>
-
-      {/* Runway utilization */}
-      <div style={{ background: '#ffffff', border: '1px solid #c8c8c0', borderRadius: 6, padding: '14px 16px' }}>
-        <div style={{ color: '#666660', fontFamily: 'monospace', fontSize: 10, letterSpacing: 1.5, marginBottom: 14 }}>
-          RUNWAY UTILIZATION
-        </div>
-        {runways.length > 0 ? (
-          runways.map((rwy, i) => (
-            <RunwayBar
-              key={rwy.runway_id ?? i}
-              label={rwy.runway_name ?? `Runway ${i + 1}`}
-              utilization={util[`runway_${rwy.runway_id ?? i + 1}`] ?? (i === 0 ? util.runway_1 : util.runway_2)}
-            />
-          ))
-        ) : (
-          <>
-            <RunwayBar label="Runway 1 (09R/27L)" utilization={util.runway_1} />
-            <RunwayBar label="Runway 2 (09L/27R)" utilization={util.runway_2} />
-          </>
-        )}
       </div>
 
       {/* Flight status breakdown */}
